@@ -1,0 +1,132 @@
+/* =========================================================
+   Estilos portada — Librería Los Lapicitos
+   Requiere: Skeleton 2.0.4 cargado antes de este archivo
+   ========================================================= */
+
+/* ===== Paleta y tokens ===== */
+:root{
+  --barra:#e3ad63;    /* amarillito superior */
+  --fondo:#fff3d9;    /* crema del fondo */
+  --texto:#6f665c;    /* marrón/gris */
+  --btn:#8a956e;      /* verde oliva */
+  --btn-txt:#ffffff;
+  --borde:rgba(0,0,0,.08);
+  --sombra:0 10px 30px rgba(0,0,0,.08);
+  --radio:12px;
+  --radio-lg:16px;
+  --f1:clamp(26px,3.2vw,34px);
+  --f3:clamp(14px,1.5vw,16px);
+}
+
+/* ===== Base ===== */
+html,body{margin:0;padding:0}
+body{
+  background:var(--fondo);
+  color:var(--texto);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* Skeleton ya define tipografías, tamaños y spacing.
+   Acomodo márgenes para nuestra portada */
+h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
+
+/* ===== Barra superior ===== */
+.barra{
+  height:48px;
+  background:var(--barra);
+  border-bottom-left-radius:var(--radio);
+  border-bottom-right-radius:var(--radio);
+  box-shadow:0 2px 0 rgba(0,0,0,.05);
+  position:relative;
+  overflow:hidden;
+}
+.barra::after{
+  content:"";
+  position:absolute; inset:0;
+  background:linear-gradient(90deg,transparent 0 30%,rgba(255,255,255,.16) 50%,transparent 70% 100%);
+  transform:translateX(-100%);
+  animation:barra-brillo 6s linear infinite;
+  pointer-events:none;
+}
+@keyframes barra-brillo{to{transform:translateX(100%)}}
+
+/* ===== Lienzo / layout general ===== */
+.lienzo{
+  min-height:calc(100dvh - 48px);
+  display:flex;
+  align-items:center;
+  padding:28px 0 56px;
+}
+
+/* Skeleton provee .container y .row.
+   Ajustes suaves para espacios laterales */
+.container{padding-left:16px;padding-right:16px}
+
+/* ===== Columna izquierda (texto) ===== */
+.titulo{
+  font-weight:600;
+  font-size:var(--f1);
+  line-height:1.2;
+  letter-spacing:.2px;
+  margin-bottom:14px;
+  position:relative;
+}
+.titulo::after{
+  content:"";
+  position:absolute; left:0; bottom:-8px;
+  width:180px; height:10px;
+  background:linear-gradient(90deg,#edd09b,transparent);
+  border-radius:999px;
+  opacity:.6;
+}
+
+.desc{
+  font-size:var(--f3);
+  line-height:1.55;
+  max-width:46ch;
+  margin:0 0 22px 0;
+}
+
+/* ===== Botón ===== */
+.btn{
+  display:inline-block;
+  background:var(--btn);
+  color:var(--btn-txt) !important;
+  text-decoration:none;
+  font-weight:600;
+  padding:10px 18px;
+  border-radius:10px;
+  border:0;
+  cursor:pointer;
+  box-shadow:0 1px 0 rgba(0,0,0,.06);
+  transition:filter .2s ease, transform .05s ease;
+}
+.btn:hover{filter:brightness(1.06)}
+.btn:active{transform:translateY(1px)}
+
+/* Si usás <button> */
+button.btn{appearance:none;border:0}
+
+/* ===== Columna derecha (ilustración) ===== */
+.ilustracion{
+  width:280px; max-width:100%; height:auto;
+  display:inline-block;
+  filter:drop-shadow(0 10px 14px rgba(0,0,0,.08));
+  transition:transform .25s ease;
+}
+@media (hover:hover){
+  .ilustracion:hover{transform:translateY(-3px) rotate(-0.3deg)}
+}
+
+/* ===== Utilidades ===== */
+.separar{margin-top:22px}
+.texto-derecha{text-align:right}
+
+/* ===== Responsive ===== */
+@media (max-width:800px){
+  .barra{height:46px}
+  .lienzo{min-height:calc(100dvh - 46px); padding:22px 0 36px}
+  .titulo::after{width:140px; bottom:-10px}
+  .texto-derecha{text-align:right} /* mantiene la img a la derecha si querés */
+}
