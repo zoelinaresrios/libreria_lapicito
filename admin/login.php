@@ -45,20 +45,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
   <!-- Franja naranja superior -->
-  <div class="login-band"></div>
+ <div class="barra"></div>
 
-  <section class="login-hero">
+ <section class="lienzo">
     <div class="container">
-      <div class="login-grid">
+      <div class="row">
         <!-- Columna izquierda: texto + form -->
-        <div>
-          <h1 class="login-title">Libreria Los Lapicitos</h1>
-          <p class="login-desc">
+        <div class="seven columns">
+          <h1 class="titulo">Libreria Los Lapicitos</h1>
+          <p class="desc">
             Bienvenido a tu sistema de gestión de inventario. Mantén el control de tus
             productos, ventas y pedidos de forma fácil y rápida.
           </p>
@@ -71,16 +71,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input class="login-input" type="email" name="email" placeholder="Correo electrónico" required>
             <input class="login-input" type="password" name="password" placeholder="•••••••" required>
 
-            <div class="login-actions">
-              <button class="login-btn" type="submit">Iniciar sesión</button>
-              <a class="login-forgot" href="#">¿Olvidaste tu contraseña?</a>
+           
+              <button class="btn" type="submit">Iniciar sesión</button>
+             
             </div>
           </form>
         </div>
 
         <!-- Columna derecha: ilustración -->
         <div class="login-illus">
-          <img src="/libreria_lapicito/admin/assets/img/hero-books.svg" alt="Libros y lápiz">
+          <img src="../img/libro.png" alt="Libros y lápiz">
         </div>
       </div>
     </div>
