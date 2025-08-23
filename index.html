@@ -1,36 +1,42 @@
-
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Libreria Los Lapicitos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="css/style.css">
+  <title>Librería Los Lapicitos — Inicio</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- Skeleton y tu estilo -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
 </head>
 <body>
 
- 
+  <!-- Barra superior -->
   <div class="barra"></div>
 
+  <!-- Lienzo principal -->
+  <section class="lienzo">
+    <div class="container">
+      <div class="row">
+        <!-- Columna texto -->
+        <div class="seven columns">
+          <h1 class="titulo">Librería Los Lapicitos</h1>
+          <p class="desc">
+            Bienvenido a tu sistema de gestión de inventario. Mantén el control de tus
+            productos, ventas y pedidos de forma fácil y rápida.
+          </p>
+          <a class="btn" href="/libreria_lapicito/admin/login.php">Iniciar sesión</a>
+        </div>
 
-  <main class="lienzo">
-    <div class="contenedor">
-      <section class="col izq">
-        <h1 class="titulo">Libreria Los Lapicitos</h1>
-        <p class="desc">
-          Bienvenido a tu sistema de gestión de inventario. Mantén el control de tus
-          productos, ventas y peiddo de forma fácil y rápida.
-        </p>
-        <!-- index.html -->
-<a href="/libreria_lapicito/admin/login.php" class="btn">iniciar sesion</a>
-
-      </section>
-
-      <section class="col der">
-        <img src="img/libros.png" alt="Libros y lápiz" class="ilustracion">
-      </section>
+        <!-- Columna ilustración -->
+        <div class="five columns texto-derecha">
+          <img class="ilustracion"
+               src="img/libro.png"
+               alt="Libros y lápiz">
+        </div>
+      </div>
     </div>
-  </main>
+  </section>
 
 </body>
 </html>

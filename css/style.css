@@ -1,9 +1,4 @@
-/* =========================================================
-   Estilos portada — Librería Los Lapicitos
-   Requiere: Skeleton 2.0.4 cargado antes de este archivo
-   ========================================================= */
 
-/* ===== Paleta y tokens ===== */
 :root{
   --barra:#e3ad63;    /* amarillito superior */
   --fondo:#fff3d9;    /* crema del fondo */
@@ -37,7 +32,7 @@ h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
   background:var(--barra);
   border-bottom-left-radius:var(--radio);
   border-bottom-right-radius:var(--radio);
-  box-shadow:0 2px 0 rgba(0,0,0,.05);
+  box-shadow:0 2px 0 #e3ad63;
   position:relative;
   overflow:hidden;
 }
@@ -86,6 +81,7 @@ h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
   line-height:1.55;
   max-width:46ch;
   margin:0 0 22px 0;
+  
 }
 
 /* ===== Botón ===== */
@@ -110,7 +106,7 @@ button.btn{appearance:none;border:0}
 
 /* ===== Columna derecha (ilustración) ===== */
 .ilustracion{
-  width:280px; max-width:100%; height:auto;
+  width: 410px; max-width:100%; height:auto;
   display:inline-block;
   filter:drop-shadow(0 10px 14px rgba(0,0,0,.08));
   transition:transform .25s ease;
@@ -123,7 +119,7 @@ button.btn{appearance:none;border:0}
 .separar{margin-top:22px}
 .texto-derecha{text-align:right}
 
-/* ===== Responsive ===== */
+
 @media (max-width:800px){
   .barra{height:46px}
   .lienzo{min-height:calc(100dvh - 46px); padding:22px 0 36px}
