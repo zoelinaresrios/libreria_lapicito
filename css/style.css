@@ -86,6 +86,7 @@ h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
 
 /* ===== Botón ===== */
 .btn{
+  font-family: Arial, Helvetica, sans-serif;
   display:inline-block;
   background:var(--btn);
   color:var(--btn-txt) !important;
@@ -128,3 +129,125 @@ button.btn{appearance:none;border:0}
 }
 
 
+/* === Ajustes finos para que calce con el mockup === */
+
+/* Franja: sombra sutil (no color plano) */
+.barra{ box-shadow:0 2px 0 rgba(0,0,0,.04); }
+
+/* Ancho cómodo y separación como en la imagen */
+.lienzo{ padding:28px 0 40px; }
+.container{ max-width:980px; }
+
+/* Form: ancho y espaciado exacto */
+.login-form{ max-width:520px; }
+.login-input{ margin-bottom:12px; }
+
+/* Botón: verde oliva, redondeado y compacto */
+.login-form .btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:42px; padding:10px 18px;
+  background:#8A956E; color:#fff !important; border:0; border-radius:12px;
+  font-size:14px; font-weight:700; letter-spacing:.02em; text-transform:none;
+  line-height:1; white-space:nowrap; appearance:none; -webkit-appearance:none;
+  box-shadow:none; transition:filter .2s, transform .05s;
+}
+.login-form .btn:hover{ background:#7C8A65; filter:brightness(1.02); }
+.login-form .btn:active{ transform:translateY(1px); }
+
+/* Imagen: tamaño y ubicación como en el mockup */
+.ilustracion{
+  width: clamp(220px, 30vw, 320px);
+  height:auto; display:inline-block;
+  filter:drop-shadow(0 10px 14px rgba(0,0,0,.08));
+}
+.texto-derecha{ text-align:right; }
+
+/* Móvil: apilar y centrar imagen */
+@media (max-width:760px){
+  .texto-derecha{ text-align:center; margin-top:8px; }
+  .ilustracion{ width:220px; }
+}
+
+/* Mensaje de error del login */
+.login-error{
+  background:#fff; border:1px solid #e7b1b1; color:#8a1f1f;
+  border-radius:10px; padding:10px 12px; margin-bottom:10px; max-width:520px;
+}
+/* ======= Productos (admin/productos) ======= */
+.inv-title{
+  text-align:center;
+  color:#6f665c;
+  font-weight:600;
+  padding:10px 0 12px;
+}
+
+/* layout */
+.prod-shell{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:0;
+  min-height:calc(100vh - 110px);
+}
+@media (max-width:1000px){ .prod-shell{ grid-template-columns:1fr; } }
+
+/* sidebar */
+.prod-side{
+  background:#fff3d9;      /* crema suave */
+  border-right:1px solid #e6d9bf;
+  padding:14px;
+}
+.prod-nav{ list-style:none; margin:0; padding:0; }
+.prod-nav li{ margin-bottom:8px; }
+.prod-nav a{
+  display:block; padding:8px 10px; border:1px solid #e6d9bf; border-radius:10px;
+  background:#fff; color:#6f665c; text-decoration:none;
+}
+.prod-nav a:hover{ background:#fffef9; border-color:#e9d7b5; }
+.prod-nav a.active{ background:#fffef2; border-color:#e9d7b5; font-weight:700; }
+
+/* main + card */
+.prod-main{ padding:14px; }
+.prod-card{
+  background:#fff9ef;
+  border:1px solid #e6d9bf;
+  border-radius:12px;
+  padding:12px;
+}
+
+/* header de la card */
+.prod-head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px;
+}
+.btn-add{
+  background:#8a956e; color:#fff !important; border:0; border-radius:12px;
+  padding:8px 12px; font-weight:700; text-decoration:none;
+}
+.btn-add:hover{ background:#7c8a65; }
+
+/* filtros */
+.prod-filters{
+  display:grid; grid-template-columns:1fr 220px 200px 120px;
+  gap:8px; align-items:center; margin-bottom:8px;
+}
+@media (max-width:900px){ .prod-filters{ grid-template-columns:1fr 1fr; } }
+
+.input-search{
+  height:38px; border:1px solid #e6d9bf; border-radius:10px; padding-left:36px; padding-right:10px;
+  background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%239b8e7f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>") no-repeat 10px center;
+}
+.prod-filters select{
+  height:38px; border:1px solid #e6d9bf; border-radius:10px; background:#fff; padding:6px 8px;
+}
+.btn-filter{
+  height:38px; border:1px solid #e6d9bf; background:#fff; border-radius:10px; padding:0 12px;
+  color:#6f665c; font-weight:600;
+}
+.btn-filter:hover{ background:#fffef9; }
+
+/* tabla y pager */
+.table-wrap{ border-radius:10px; overflow:auto; }
+table.u-full-width thead th{ background:#fff3d9; }
+.prod-pager{ text-align:center; margin-top:10px; }
+.prod-pager a{ display:inline-block; padding:4px 8px; border-radius:8px; margin:0 2px; color:#6f665c; text-decoration:none; }
+.prod-pager a.on{ background:#fffef9; border:1px solid #e9d7b5; }

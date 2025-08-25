@@ -50,9 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 
   <!-- Franja naranja superior -->
- <div class="barra"></div>
+  <div class="barra"></div>
 
- <section class="lienzo">
+  <section class="lienzo">
     <div class="container">
       <div class="row">
         <!-- Columna izquierda: texto + form -->
@@ -70,17 +70,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <form method="post" class="login-form" autocomplete="off">
             <input class="login-input" type="email" name="email" placeholder="Correo electrónico" required>
             <input class="login-input" type="password" name="password" placeholder="•••••••" required>
-
-           
-              <button class="btn" type="submit">Iniciar sesión</button>
-             
-            </div>
+            <button class="btn" type="submit">Iniciar sesión</button>
           </form>
         </div>
 
         <!-- Columna derecha: ilustración -->
-        <div class="login-illus">
-          <img src="../img/libro.png" alt="Libros y lápiz">
+        <div class="five columns texto-derecha">
+          <img class="ilustracion" src="../img/libro.png" alt="Libros y lápiz">
         </div>
       </div>
     </div>
