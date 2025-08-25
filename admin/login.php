@@ -52,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <!-- Franja naranja superior -->
   <div class="barra"></div>
 
+  
   <section class="lienzo">
     <div class="container">
       <div class="row">
