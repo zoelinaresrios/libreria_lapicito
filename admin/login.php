@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
+
   <!-- Franja naranja superior -->
   <div class="barra"></div>
 
