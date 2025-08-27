@@ -295,3 +295,20 @@ table.u-full-width thead th{ background:#fff3d9; }
 }
 
 .is-hidden{ display:none; }
+/* Botón chico para acciones en tabla */
+.btn-sm{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:8px;
+  background:var(--btn);
+  color:#fff!important;
+  text-decoration:none;
+  font-weight:600;
+  border:0;
+}
+.btn-sm:hover{ filter:brightness(1.06); }
+.btn-sm.ghost{
+  background:transparent;
+  color:var(--texto)!important;
+  border:1px solid var(--borde);
+}

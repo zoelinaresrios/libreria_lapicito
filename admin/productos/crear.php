@@ -9,10 +9,22 @@ if (function_exists('is_logged') && !is_logged()) {
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-$errores = [];
-$ok = false;
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+function toFloat($s){
+  // Acepta "1.234,56" o "1234.56" → 1234.56
+  $s = preg_replace('/[^\d,.\-]/','', (string)$s);
+  // Si tiene coma y punto, asumimos coma decimal (formato LATAM)
+  if (strpos($s, ',') !== false && strpos($s, '.') !== false){
+    $s = str_replace('.', '', $s);      // quita miles .
+    $s = str_replace(',', '.', $s);     // decimal ,
+  } else {
+    // Solo coma → decimal ; solo punto → decimal
+    $s = str_replace(',', '.', $s);
+  }
+  return (float)$s;
+}
 
-// --- Cargar listas para selects ---
+/* ------- Listas para selects ------- */
 $subcats = [];
 $proveedores = [];
 $sucursales = [];
@@ -26,7 +38,10 @@ while ($row = $res->fetch_assoc()) { $proveedores[] = $row; }
 $res = $conexion->query("SELECT id_sucursal, nombre FROM sucursal ORDER BY nombre");
 while ($row = $res->fetch_assoc()) { $sucursales[] = $row; }
 
-// --- Valores por defecto / repoblado ---
+/* ------- Valores iniciales / repoblado ------- */
+$errores = [];
+$ok = false;
+
 $codigo  = trim($_POST['codigo']  ?? '');
 $nombre  = trim($_POST['nombre']  ?? '');
 $id_subcategoria = (int)($_POST['id_subcategoria'] ?? 0);
@@ -34,7 +49,7 @@ $id_proveedor    = (int)($_POST['id_proveedor']    ?? 0);
 $ubicacion = trim($_POST['ubicacion'] ?? '');
 $precio_compra = (string)($_POST['precio_compra'] ?? '');
 $precio_venta  = (string)($_POST['precio_venta']  ?? '');
-$activo  = isset($_POST['activo']) ? 1 : 1; // por defecto activo
+$activo  = isset($_POST['activo']) ? 1 : 1; // por defecto queda activo
 
 $crear_inventario = isset($_POST['crear_inventario']) ? 1 : 0;
 $id_sucursal = (int)($_POST['id_sucursal'] ?? 0);
@@ -42,130 +57,100 @@ $stock_minimo  = (int)($_POST['stock_minimo']  ?? 0);
 $stock_inicial = (int)($_POST['stock_inicial'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  // --- Validaciones básicas ---
+  // --- Validaciones ---
   if ($codigo === '')   $errores[] = 'El código es obligatorio.';
   if ($nombre === '')   $errores[] = 'El nombre es obligatorio.';
   if ($id_subcategoria <= 0) $errores[] = 'Seleccioná una subcategoría.';
   if ($id_proveedor    <= 0) $errores[] = 'Seleccioná un proveedor.';
 
-  // normalizar números (acepta coma o punto)
-  $pc = (float)str_replace(',', '.', $precio_compra);
-  $pv = (float)str_replace(',', '.', $precio_venta);
+  $pc = toFloat($precio_compra);
+  $pv = toFloat($precio_venta);
   if ($pc < 0) $errores[] = 'Precio de compra inválido.';
   if ($pv < 0) $errores[] = 'Precio de venta inválido.';
   if ($pc > 0 && $pv > 0 && $pc > $pv) $errores[] = 'El precio de venta debe ser mayor o igual al de compra.';
 
-  // FKs existen
+  // Validar FKs
   $stmt = $conexion->prepare("SELECT 1 FROM subcategoria WHERE id_subcategoria=?");
   $stmt->bind_param('i',$id_subcategoria); $stmt->execute();
-  if (!$stmt->get_result()->fetch_row()) $errores[] = 'La subcategoría no existe.';
-  $stmt->close();
+  if (!$stmt->get_result()->fetch_row()) $errores[] = 'La subcategoría no existe.'; $stmt->close();
 
   $stmt = $conexion->prepare("SELECT 1 FROM proveedor WHERE id_proveedor=?");
   $stmt->bind_param('i',$id_proveedor); $stmt->execute();
-  if (!$stmt->get_result()->fetch_row()) $errores[] = 'El proveedor no existe.';
-  $stmt->close();
+  if (!$stmt->get_result()->fetch_row()) $errores[] = 'El proveedor no existe.'; $stmt->close();
 
   // Código único
   $stmt = $conexion->prepare("SELECT 1 FROM producto WHERE codigo=? LIMIT 1");
   $stmt->bind_param('s',$codigo); $stmt->execute();
-  if ($stmt->get_result()->fetch_row()) $errores[] = 'Ya existe un producto con ese código.';
-  $stmt->close();
+  if ($stmt->get_result()->fetch_row()) $errores[] = 'Ya existe un producto con ese código.'; $stmt->close();
 
-  // Si va a crear inventario
+  // Inventario inicial
   if ($crear_inventario) {
     if ($id_sucursal <= 0) $errores[] = 'Seleccioná una sucursal para el inventario.';
     if ($stock_minimo < 0) $errores[] = 'Stock mínimo inválido.';
     if ($stock_inicial < 0) $errores[] = 'Stock inicial inválido.';
   }
 
-  // --- Insert ---
+  // --- Insertar ---
   if (!$errores) {
     $conexion->begin_transaction();
     try {
-      $stmt = $conexion->prepare("INSERT INTO producto
-        (codigo, nombre, id_subcategoria, id_proveedor, ubicacion, precio_compra, precio_venta, activo, creado_en, actualizado_en)
-        VALUES (?,?,?,?,?,?,?,?, NOW(), NOW())");
-      $stmt->bind_param('ssii sddi',
-        /* s */ $codigo,
-        /* s */ $nombre,
-        /* i */ $id_subcategoria,
-        /* i */ $id_proveedor,
-        /* s */ $ubicacion,
-        /* d */ $pc,
-        /* d */ $pv,
-        /* i */ $activo
+      // Producto
+      $stmt = $conexion->prepare("
+        INSERT INTO producto
+          (codigo, nombre, id_subcategoria, id_proveedor, ubicacion,
+           precio_compra, precio_venta, activo, creado_en, actualizado_en)
+        VALUES (?,?,?,?,?,?,?, ?, NOW(), NOW())
+      ");
+      // Tipos: s s i i s d d i  => 'ssiisddi'
+      $stmt->bind_param(
+        'ssiisddi',
+        $codigo,           // s
+        $nombre,           // s
+        $id_subcategoria,  // i
+        $id_proveedor,     // i
+        $ubicacion,        // s
+        $pc,               // d
+        $pv,               // d
+        $activo            // i
       );
-      // PHP8 tiene bug con espacios en tipos; reescribimos sin espacios:
-      $stmt->close();
-      $stmt = $conexion->prepare("INSERT INTO producto
-        (codigo, nombre, id_subcategoria, id_proveedor, ubicacion, precio_compra, precio_venta, activo, creado_en, actualizado_en)
-        VALUES (?,?,?,?,?,?,?, ?, NOW(), NOW())");
-      $stmt->bind_param('ssii sddi', $codigo, $nombre, $id_subcategoria, $id_proveedor, $ubicacion, $pc, $pv, $activo);
-      // Arriba agregué un espacio en 'ssii sddi' por legibilidad; para evitar problemas lo cambio a:
-      $stmt->close();
-      $stmt = $conexion->prepare("INSERT INTO producto
-        (codigo, nombre, id_subcategoria, id_proveedor, ubicacion, precio_compra, precio_venta, activo, creado_en, actualizado_en)
-        VALUES (?,?,?,?,?,?,?, ?, NOW(), NOW())");
-      // tipos correctos:
-      $stmt->bind_param('ssii sddi', $codigo, $nombre, $id_subcategoria, $id_proveedor, $ubicacion, $pc, $pv, $activo);
-    } catch (Throwable $e) {
-      // Para evitar confusiones con el bind anterior, rearmamos de forma segura:
-      $stmt = $conexion->prepare("INSERT INTO producto
-        (codigo, nombre, id_subcategoria, id_proveedor, ubicacion, precio_compra, precio_venta, activo, creado_en, actualizado_en)
-        VALUES (?,?,?,?,?,?,?, ?, NOW(), NOW())");
-      $types = 'ssii sddi';
-      $types = 'ssii sddi'; // placeholder para legibilidad
-    }
-
-    // Para máxima compatibilidad, hacemos el bind así:
-    $stmt->bind_param('ssii sddi', $codigo, $nombre, $id_subcategoria, $id_proveedor, $ubicacion, $pc, $pv, $activo);
-    // Algunos PHP cambian el manejo de espacios en el string de tipos, armamos final:
-    $stmt->close();
-    $stmt = $conexion->prepare("INSERT INTO producto
-      (codigo, nombre, id_subcategoria, id_proveedor, ubicacion, precio_compra, precio_venta, activo, creado_en, actualizado_en)
-      VALUES (?,?,?,?,?,?,?, ?, NOW(), NOW())");
-    $stmt->bind_param('ssii sddi', $codigo, $nombre, $id_subcategoria, $id_proveedor, $ubicacion, $pc, $pv, $activo);
-
-    // Para evitar problemas, hacemos el bind con tipos sin espacios:
-    $stmt->close();
-    $stmt = $conexion->prepare("INSERT INTO producto
-      (codigo, nombre, id_subcategoria, id_proveedor, ubicacion, precio_compra, precio_venta, activo, creado_en, actualizado_en)
-      VALUES (?,?,?,?,?,?,?, ?, NOW(), NOW())");
-    $stmt->bind_param('ssiissdi',
-      $codigo, $nombre, $id_subcategoria, $id_proveedor, $ubicacion, $pc, $pv, $activo
-    );
-    $stmt->execute();
-    $id_producto = $conexion->insert_id;
-    $stmt->close();
-
-    if ($crear_inventario) {
-      // Evitar duplicado inventario
-      $stmt = $conexion->prepare("SELECT 1 FROM inventario WHERE id_sucursal=? AND id_producto=?");
-      $stmt->bind_param('ii', $id_sucursal, $id_producto);
       $stmt->execute();
-      $existeInv = (bool)$stmt->get_result()->fetch_row();
+      $id_producto = $conexion->insert_id;
       $stmt->close();
 
-      if (!$existeInv) {
-        $stmt = $conexion->prepare("INSERT INTO inventario (id_sucursal, id_producto, stock_minimo, stock_actual)
-                                    VALUES (?,?,?,?)");
-        $stmt->bind_param('iiii', $id_sucursal, $id_producto, $stock_minimo, $stock_inicial);
+      // Inventario inicial (opcional)
+      if ($crear_inventario) {
+        // Evitar duplicado inventario
+        $stmt = $conexion->prepare("SELECT 1 FROM inventario WHERE id_sucursal=? AND id_producto=? LIMIT 1");
+        $stmt->bind_param('ii', $id_sucursal, $id_producto);
         $stmt->execute();
+        $existeInv = (bool)$stmt->get_result()->fetch_row();
         $stmt->close();
-      }
-    }
 
-    $conexion->commit();
-    $ok = true;
-    // Limpiar form
-    $codigo = $nombre = $ubicacion = $precio_compra = $precio_venta = '';
-    $id_subcategoria = $id_proveedor = 0;
-    $activo = 1; $crear_inventario = 0; $id_sucursal = 0; $stock_minimo = $stock_inicial = 0;
+        if (!$existeInv) {
+          $stmt = $conexion->prepare("
+            INSERT INTO inventario (id_sucursal, id_producto, stock_minimo, stock_actual)
+            VALUES (?,?,?,?)
+          ");
+          $stmt->bind_param('iiii', $id_sucursal, $id_producto, $stock_minimo, $stock_inicial);
+          $stmt->execute();
+          $stmt->close();
+        }
+      }
+
+      $conexion->commit();
+      $ok = true;
+
+      // Limpiar form tras éxito
+      $codigo = $nombre = $ubicacion = $precio_compra = $precio_venta = '';
+      $id_subcategoria = $id_proveedor = 0;
+      $activo = 1; $crear_inventario = 0; $id_sucursal = 0; $stock_minimo = $stock_inicial = 0;
+
+    } catch (Throwable $e) {
+      $conexion->rollback();
+      $errores[] = 'No se pudo guardar el producto: '.$e->getMessage();
+    }
   }
 }
-
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 ?>
 <!doctype html>
 <html lang="es">
@@ -215,14 +200,14 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <form method="post" class="form-grid" autocomplete="off">
           <!-- Columna izquierda -->
           <div>
-            <label>Código *</label>
-            <input type="text" name="codigo" value="<?= h($codigo) ?>" required>
+            <label for="codigo">Código *</label>
+            <input id="codigo" type="text" name="codigo" value="<?= h($codigo) ?>" required>
 
-            <label>Nombre *</label>
-            <input type="text" name="nombre" value="<?= h($nombre) ?>" required>
+            <label for="nombre">Nombre *</label>
+            <input id="nombre" type="text" name="nombre" value="<?= h($nombre) ?>" required>
 
-            <label>Subcategoría *</label>
-            <select name="id_subcategoria" required>
+            <label for="id_subcategoria">Subcategoría *</label>
+            <select id="id_subcategoria" name="id_subcategoria" required>
               <option value="0">Seleccioná…</option>
               <?php foreach($subcats as $s): ?>
                 <option value="<?= (int)$s['id_subcategoria'] ?>" <?= $id_subcategoria===(int)$s['id_subcategoria']?'selected':'' ?>>
@@ -231,8 +216,8 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
               <?php endforeach; ?>
             </select>
 
-            <label>Proveedor *</label>
-            <select name="id_proveedor" required>
+            <label for="id_proveedor">Proveedor *</label>
+            <select id="id_proveedor" name="id_proveedor" required>
               <option value="0">Seleccioná…</option>
               <?php foreach($proveedores as $p): ?>
                 <option value="<?= (int)$p['id_proveedor'] ?>" <?= $id_proveedor===(int)$p['id_proveedor']?'selected':'' ?>>
@@ -241,20 +226,20 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
               <?php endforeach; ?>
             </select>
 
-            <label>Ubicación</label>
-            <input type="text" name="ubicacion" value="<?= h($ubicacion) ?>" placeholder="Ej: A1-03">
+            <label for="ubicacion">Ubicación</label>
+            <input id="ubicacion" type="text" name="ubicacion" value="<?= h($ubicacion) ?>" placeholder="Ej: A1-03">
           </div>
 
           <!-- Columna derecha -->
           <div>
             <div class="row">
               <div class="six columns">
-                <label>Precio compra</label>
-                <input type="number" step="0.01" min="0" name="precio_compra" value="<?= h($precio_compra) ?>" placeholder="0,00">
+                <label for="precio_compra">Precio compra</label>
+                <input id="precio_compra" type="number" step="0.01" min="0" name="precio_compra" value="<?= h($precio_compra) ?>" placeholder="0,00">
               </div>
               <div class="six columns">
-                <label>Precio venta</label>
-                <input type="number" step="0.01" min="0" name="precio_venta" value="<?= h($precio_venta) ?>" placeholder="0,00">
+                <label for="precio_venta">Precio venta</label>
+                <input id="precio_venta" type="number" step="0.01" min="0" name="precio_venta" value="<?= h($precio_venta) ?>" placeholder="0,00">
               </div>
             </div>
 
@@ -271,8 +256,8 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
             </label>
 
             <div id="invBlock" class="<?= $crear_inventario? '':'is-hidden' ?>">
-              <label>Sucursal</label>
-              <select name="id_sucursal">
+              <label for="id_sucursal">Sucursal</label>
+              <select id="id_sucursal" name="id_sucursal">
                 <option value="0">Seleccioná…</option>
                 <?php foreach($sucursales as $s): ?>
                   <option value="<?= (int)$s['id_sucursal'] ?>" <?= $id_sucursal===(int)$s['id_sucursal']?'selected':'' ?>>
@@ -283,12 +268,12 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
               <div class="row">
                 <div class="six columns">
-                  <label>Stock mínimo</label>
-                  <input type="number" min="0" name="stock_minimo" value="<?= (int)$stock_minimo ?>">
+                  <label for="stock_minimo">Stock mínimo</label>
+                  <input id="stock_minimo" type="number" min="0" name="stock_minimo" value="<?= (int)$stock_minimo ?>">
                 </div>
                 <div class="six columns">
-                  <label>Stock inicial</label>
-                  <input type="number" min="0" name="stock_inicial" value="<?= (int)$stock_inicial ?>">
+                  <label for="stock_inicial">Stock inicial</label>
+                  <input id="stock_inicial" type="number" min="0" name="stock_inicial" value="<?= (int)$stock_inicial ?>">
                 </div>
               </div>
             </div>
