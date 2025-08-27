@@ -18,20 +18,12 @@ $desde = $_GET['desde'] ?? date('Y-m-d', strtotime('-30 days'));
 $hasta = $_GET['hasta'] ?? date('Y-m-d');
 $dSQL = esc($conexion,$desde); $hSQL = esc($conexion,$hasta);
 
-/* TU ESQUEMA (resumen):
-   venta(fecha_hora,total) · venta_detalle(id_venta,id_producto,cantidad)
-   producto(id_producto,nombre,id_subcategoria) · subcategoria(id_subcategoria,id_categoria)
-   categoria(id_categoria,nombre) · inventario(stock_actual,stock_minimo)
-   movimiento(fecha_hora,id_tipo_movimiento) · movimiento_detalle(id_movimiento,id_producto,cantidad)
-   alerta(fecha_creada,atendida) · pedido(fecha_creado,id_estado_pedido) · proveedor(nombre)
-*/
 
-// KPIs
 $totProductos = (int) (q($conexion,"SELECT COUNT(*) c FROM producto",$notes,'kpi_productos')[0]['c'] ?? 0);
 $totBajoStock = (int) (q($conexion,"SELECT COUNT(*) c FROM inventario WHERE stock_actual <= stock_minimo",$notes,'kpi_bajo_stock')[0]['c'] ?? 0);
 $ventasHoy    = (float)(q($conexion,"SELECT COALESCE(SUM(total),0) t FROM venta WHERE DATE(fecha_hora)=CURDATE()",$notes,'kpi_ventas_hoy')[0]['t'] ?? 0);
 
-// Ventas por mes (12m)
+
 $ventasMensuales = q($conexion,"
   SELECT DATE_FORMAT(fecha_hora,'%Y-%m') ym, ROUND(SUM(total),2) total
   FROM venta
@@ -41,7 +33,6 @@ $ventasMensuales = q($conexion,"
 $chartMensualLabels = array_column($ventasMensuales,'ym');
 $chartMensualData   = array_map('floatval', array_column($ventasMensuales,'total'));
 
-// Top productos por unidades (rango)
 $top = q($conexion,"
   SELECT p.nombre, SUM(vd.cantidad) unidades
   FROM venta_detalle vd
@@ -55,7 +46,6 @@ $top = q($conexion,"
 $chartTopLabels = array_column($top,'nombre');
 $chartTopData   = array_map('intval', array_column($top,'unidades'));
 
-// Ingresos por categoría (mov ENTRADA=1)
 $ing = q($conexion,"
   SELECT c.nombre AS categoria, SUM(md.cantidad) AS cant
   FROM movimiento_detalle md
@@ -89,7 +79,7 @@ $pend = q($conexion,"
   LIMIT 8
 ",$notes,'pedidos_pendientes');
 
-// ---- Header (Skeleton) ----
+
 include(__DIR__ . '/../includes/header.php');
 ?>
 
@@ -229,7 +219,7 @@ include(__DIR__ . '/../includes/header.php');
 </div>
 
 <?php
-// JS para los gráficos (inyectado en footer)
+
 $extra_js = '<script>
 const ventasMensualesLabels = '.json_encode($chartMensualLabels).';
 const ventasMensualesData   = '.json_encode($chartMensualData).';
