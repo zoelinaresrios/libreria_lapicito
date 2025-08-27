@@ -49,19 +49,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
-  <!-- Franja naranja superior -->
+  
   <div class="barra"></div>
 
   
   <section class="lienzo">
     <div class="container">
       <div class="row">
-        <!-- Columna izquierda: texto + form -->
+       
+      
         <div class="seven columns">
           <h1 class="titulo">Libreria Los Lapicitos</h1>
           <p class="desc">
             Bienvenido a tu sistema de gestión de inventario. Mantén el control de tus
             productos, ventas y pedidos de forma fácil y rápida.
+            mail:admin@loslapicitos.com contraseña:Admin123!
           </p>
 
           <?php if ($error): ?>

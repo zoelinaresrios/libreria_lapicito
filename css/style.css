@@ -251,3 +251,64 @@ table.u-full-width thead th{ background:#fff3d9; }
 .prod-pager{ text-align:center; margin-top:10px; }
 .prod-pager a{ display:inline-block; padding:4px 8px; border-radius:8px; margin:0 2px; color:#6f665c; text-decoration:none; }
 .prod-pager a.on{ background:#fffef9; border:1px solid #e9d7b5; }
+/* --- Lupa del buscador: pequeña y a la derecha --- */
+.prod-search{ position:relative; width:100%; }
+
+.prod-search .icon-search{
+  position:absolute;
+  right:10px;                 /* a la DERECHA */
+  top:50%; transform:translateY(-50%);
+  width:14px; height:14px;    /* chiquita */
+  color:#a89b8b;
+  pointer-events:none;        /* no bloquea clic/teclado */
+  opacity:.95;
+}
+
+/* deja espacio a la derecha para la lupa */
+.input-search{
+  height:38px;
+  border:1px solid #e6d9bf; border-radius:10px;
+  background:#fff;
+  padding-right:36px;         /* espacio para la lupa */
+  padding-left:10px;
+  box-sizing:border-box;
+}
+.input-search:focus{
+  outline:0; border-color:#d8c8a9;
+  box-shadow:0 0 0 3px rgba(225,163,87,.18);
+}
+/* ====== Crear Producto ====== */
+.form-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+  margin-top:8px;
+}
+@media (max-width:900px){ .form-grid{ grid-template-columns:1fr; } }
+
+.form-actions{
+  grid-column: 1 / -1;
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  margin-top:6px;
+}
+
+.is-hidden{ display:none; }
+/* Botón chico para acciones en tabla */
+.btn-sm{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:8px;
+  background:var(--btn);
+  color:#fff!important;
+  text-decoration:none;
+  font-weight:600;
+  border:0;
+}
+.btn-sm:hover{ filter:brightness(1.06); }
+.btn-sm.ghost{
+  background:transparent;
+  color:var(--texto)!important;
+  border:1px solid var(--borde);
+}
