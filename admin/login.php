@@ -2,6 +2,7 @@
 include(__DIR__ . '/../includes/db.php');
 require_once __DIR__ . '/../includes/auth.php';
 
+
 if (function_exists('is_logged') && is_logged()) {
   header('Location: /libreria_lapicito/admin/index.php'); exit;
 }

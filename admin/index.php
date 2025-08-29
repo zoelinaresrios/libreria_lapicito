@@ -1,253 +1,507 @@
 <?php
-// /libreria_lapicito/admin/index.php — Skeleton + consultas adaptadas a tu esquema
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
-if (!isset($_SESSION['user'])) { header('Location: /libreria_lapicito/admin/login.php'); exit; }
+include(__DIR__ . '/../includes/db.php');
+$HAS_AUTH = file_exists(__DIR__ . '/../includes/auth.php');
+if ($HAS_AUTH) require_once __DIR__ . '/../includes/auth.php';
 
-include(__DIR__ . '/../includes/db.php'); // $conexion (mysqli)
+$HAS_ACL = file_exists(__DIR__ . '/../includes/acl.php');
+if ($HAS_ACL) {
+  require_once __DIR__ . '/../includes/acl.php';
+} else {
+  
+  if (session_status()===PHP_SESSION_NONE) session_start();
+  if (!function_exists('can')) { function can($k){ return true; } }
+  if (!function_exists('require_perm')) { function require_perm($k){ return true; } }
+}
+if ($HAS_AUTH && function_exists('is_logged') && !is_logged()) {
+  header('Location: /libreria_lapicito/admin/login.php'); exit;
+}
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+if (session_status()===PHP_SESSION_NONE) session_start();
 
-// helpers
-function q(mysqli $cn, string $sql, array &$notes, string $key){ try{$r=$cn->query($sql);return $r?$r->fetch_all(MYSQLI_ASSOC):[];}catch(Throwable $e){$notes[]="$key: ".$e->getMessage();return[];}}
-function esc(mysqli $cn, string $s){ return $cn->real_escape_string($s); }
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+$warns = [];
 
-$page_title = 'Dashboard — Los Lapicitos';
-$notes = [];
-
-// filtros
+/* Filtros de fecha (para Top y ventas recientes)  */
+$hoy = date('Y-m-d');
 $desde = $_GET['desde'] ?? date('Y-m-d', strtotime('-30 days'));
-$hasta = $_GET['hasta'] ?? date('Y-m-d');
-$dSQL = esc($conexion,$desde); $hSQL = esc($conexion,$hasta);
+$hasta = $_GET['hasta'] ?? $hoy;
+if (strtotime($hasta) < strtotime($desde)) { $tmp=$desde; $desde=$hasta; $hasta=$tmp; }
+
+function q_one(mysqli $cn, string $sql, string $types = '', array $params = []) {
+  global $warns;
+  try {
+    $st = $cn->prepare($sql);
+    if ($types) $st->bind_param($types, ...$params);
+    $st->execute();
+    $r = $st->get_result()->fetch_assoc();
+    $st->close();
+    return $r ?: [];
+  } catch (Throwable $e) {
+    $warns[] = '⚠️ '.h($e->getMessage());
+    return [];
+  }
+}
+function q_all(mysqli $cn, string $sql, string $types = '', array $params = []) {
+  global $warns;
+  try {
+    $st = $cn->prepare($sql);
+    if ($types) $st->bind_param($types, ...$params);
+    $st->execute();
+    $rows = $st->get_result()->fetch_all(MYSQLI_ASSOC);
+    $st->close();
+    return $rows;
+  } catch (Throwable $e) {
+    $warns[] = '⚠️ '.h($e->getMessage());
+    return [];
+  }
+}
 
 
-$totProductos = (int) (q($conexion,"SELECT COUNT(*) c FROM producto",$notes,'kpi_productos')[0]['c'] ?? 0);
-$totBajoStock = (int) (q($conexion,"SELECT COUNT(*) c FROM inventario WHERE stock_actual <= stock_minimo",$notes,'kpi_bajo_stock')[0]['c'] ?? 0);
-$ventasHoy    = (float)(q($conexion,"SELECT COALESCE(SUM(total),0) t FROM venta WHERE DATE(fecha_hora)=CURDATE()",$notes,'kpi_ventas_hoy')[0]['t'] ?? 0);
+$total_productos = (int)(q_one($conexion,"SELECT COUNT(*) n FROM producto")['n'] ?? 0);
 
+// Total categorías / subcategorías / proveedores
+$total_categorias    = (int)(q_one($conexion,"SELECT COUNT(*) n FROM categoria")['n']    ?? 0);
+$total_subcategorias = (int)(q_one($conexion,"SELECT COUNT(*) n FROM subcategoria")['n'] ?? 0);
+$total_proveedores   = (int)(q_one($conexion,"SELECT COUNT(*) n FROM proveedor")['n']    ?? 0);
 
-$ventasMensuales = q($conexion,"
-  SELECT DATE_FORMAT(fecha_hora,'%Y-%m') ym, ROUND(SUM(total),2) total
-  FROM venta
-  WHERE fecha_hora >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-  GROUP BY ym ORDER BY ym
-",$notes,'ventas_mensuales');
-$chartMensualLabels = array_column($ventasMensuales,'ym');
-$chartMensualData   = array_map('floatval', array_column($ventasMensuales,'total'));
+// Stock total
+$stock_total = (int)(q_one($conexion,"SELECT COALESCE(SUM(stock_actual),0) n FROM inventario")['n'] ?? 0);
 
-$top = q($conexion,"
-  SELECT p.nombre, SUM(vd.cantidad) unidades
+// Productos sin stock 
+$prod_sin_stock = (int)(q_one($conexion,"
+  SELECT COUNT(*) n FROM (
+    SELECT p.id_producto
+    FROM producto p
+    LEFT JOIN inventario i ON i.id_producto=p.id_producto
+    GROUP BY p.id_producto
+    HAVING COALESCE(SUM(i.stock_actual),0) <= 0
+  ) t
+")['n'] ?? 0);
+
+// Bajo stock
+$alertas_bajo = (int)(q_one($conexion,"
+  SELECT COUNT(*) n FROM (
+    SELECT p.id_producto
+    FROM producto p
+    LEFT JOIN inventario i ON i.id_producto=p.id_producto
+    GROUP BY p.id_producto
+    HAVING COALESCE(SUM(i.stock_actual),0) <= COALESCE(MIN(i.stock_minimo),0)
+  ) t
+")['n'] ?? 0);
+
+// Ventas de hoy
+$ventas_hoy = (float)(q_one($conexion,"
+  SELECT COALESCE(SUM(v.total),0) total
+  FROM venta v
+  WHERE DATE(v.fecha_hora)=CURDATE()
+")['total'] ?? 0.0);
+
+/*Ventas por mes */
+$ventas_mes = q_all($conexion,"
+  SELECT DATE_FORMAT(v.fecha_hora,'%Y-%m') ym,
+         DATE_FORMAT(v.fecha_hora,'%b %Y') etiqueta,
+         SUM(v.total) total
+  FROM venta v
+  WHERE v.fecha_hora >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+  GROUP BY ym, etiqueta
+  ORDER BY ym
+");
+
+/*  Top productos */
+$top_prod = q_all($conexion,"
+  SELECT p.id_producto, p.nombre,
+         SUM(vd.cantidad) unidades,
+         SUM(vd.cantidad * vd.precio_unitario) total
   FROM venta_detalle vd
-  JOIN venta v    ON v.id_venta    = vd.id_venta
-  JOIN producto p ON p.id_producto = vd.id_producto
-  WHERE DATE(v.fecha_hora) BETWEEN '$dSQL' AND '$hSQL'
+  JOIN venta v      ON v.id_venta = vd.id_venta
+  JOIN producto p   ON p.id_producto = vd.id_producto
+  WHERE v.fecha_hora >= ? AND v.fecha_hora < DATE_ADD(?, INTERVAL 1 DAY)
   GROUP BY p.id_producto, p.nombre
   ORDER BY unidades DESC
   LIMIT 10
-",$notes,'top_productos');
-$chartTopLabels = array_column($top,'nombre');
-$chartTopData   = array_map('intval', array_column($top,'unidades'));
+",'ss',[$desde,$hasta]);
 
-$ing = q($conexion,"
-  SELECT c.nombre AS categoria, SUM(md.cantidad) AS cant
-  FROM movimiento_detalle md
-  JOIN movimiento m     ON m.id_movimiento = md.id_movimiento
-  JOIN producto  p      ON p.id_producto   = md.id_producto
-  JOIN subcategoria sc  ON sc.id_subcategoria = p.id_subcategoria
-  JOIN categoria c      ON c.id_categoria  = sc.id_categoria
-  WHERE m.id_tipo_movimiento = 1
-    AND DATE(m.fecha_hora) BETWEEN '$dSQL' AND '$hSQL'
+/* Ventas recientes */
+$ventas_recientes = q_all($conexion,"
+  SELECT v.id_venta, v.fecha_hora, v.total
+  FROM venta v
+  ORDER BY v.fecha_hora DESC
+  LIMIT 10
+");
+
+/*Stock por categoría*/
+$stock_cat = q_all($conexion,"
+  SELECT c.nombre categoria, COALESCE(SUM(i.stock_actual),0) cant
+  FROM producto p
+  LEFT JOIN subcategoria sc ON sc.id_subcategoria=p.id_subcategoria
+  LEFT JOIN categoria c     ON c.id_categoria=sc.id_categoria
+  LEFT JOIN inventario i    ON i.id_producto=p.id_producto
   GROUP BY c.id_categoria, c.nombre
-  ORDER BY cant DESC
+  ORDER BY cant DESC, categoria ASC
   LIMIT 8
-",$notes,'ingresos_por_categoria');
+");
 
-// Alertas recientes
-$alertas = q($conexion,"
-  SELECT a.id_alerta, a.id_producto, a.atendida, a.fecha_creada, p.nombre AS producto
-  FROM alerta a
-  LEFT JOIN producto p ON p.id_producto = a.id_producto
-  ORDER BY a.fecha_creada DESC
-  LIMIT 8
-",$notes,'alertas_recientes');
+/* Lista bajo stock */
+$low_list = q_all($conexion,"
+  SELECT p.id_producto, p.nombre,
+         COALESCE(SUM(i.stock_actual),0) st,
+         COALESCE(MIN(i.stock_minimo),0) smin
+  FROM producto p
+  LEFT JOIN inventario i ON i.id_producto=p.id_producto
+  GROUP BY p.id_producto, p.nombre
+  HAVING COALESCE(SUM(i.stock_actual),0) <= COALESCE(MIN(i.stock_minimo),0)
+  ORDER BY st ASC, p.nombre ASC
+  LIMIT 10
+");
 
-// Pedidos pendientes (id_estado_pedido = 1)
-$pend = q($conexion,"
-  SELECT p.id_pedido, pr.nombre AS proveedor, p.fecha_creado
+/* Pedidos pendientes */
+$ped_pend = q_all($conexion,"
+  SELECT p.id_pedido, p.id_proveedor, ep.nombre_estado AS estado,
+         pr.nombre AS proveedor
   FROM pedido p
-  LEFT JOIN proveedor pr ON pr.id_proveedor = p.id_proveedor
+  LEFT JOIN estado_pedido ep ON ep.id_estado_pedido=p.id_estado_pedido
+  LEFT JOIN proveedor pr     ON pr.id_proveedor=p.id_proveedor
   WHERE p.id_estado_pedido = 1
-  ORDER BY p.fecha_creado DESC
-  LIMIT 8
-",$notes,'pedidos_pendientes');
+  ORDER BY p.id_pedido DESC
+  LIMIT 10
+");
 
+/*  Movimientos recientes*/
+$mov_rec = q_all($conexion,"
+  SELECT m.id_movimiento, tm.nombre_tipo AS tipo,
+         SUM(md.cantidad) as unidades
+  FROM movimiento m
+  LEFT JOIN tipo_movimiento tm ON tm.id_tipo_movimiento=m.id_tipo_movimiento
+  LEFT JOIN movimiento_detalle md ON md.id_movimiento=m.id_movimiento
+  GROUP BY m.id_movimiento, tm.nombre_tipo
+  ORDER BY m.id_movimiento DESC
+  LIMIT 10
+");
 
-include(__DIR__ . '/../includes/header.php');
+/*  Alertas  */
+$alertas_tbl = q_all($conexion,"
+  SELECT a.id_alerta, ta.nombre_tipo AS tipo, p.nombre AS producto, a.atendida
+  FROM alerta a
+  LEFT JOIN tipo_alerta ta ON ta.id_tipo_alerta=a.id_tipo_alerta
+  LEFT JOIN producto p     ON p.id_producto=a.id_producto
+  ORDER BY a.id_alerta DESC
+  LIMIT 10
+");
 ?>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard — Los Lapicitos</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+</head>
+<body>
 
-<div class="row">
-  <div class="three columns">
-    <div class="card">
-      <h6>Gestión</h6>
-      <ul class="menu">
-        <li><a href="/libreria_lapicito/admin/index.php">Dashboard</a></li>
-        <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
+  
+  <div class="barra"></div>
+
+  <div class="prod-shell">
+    <aside class="prod-side">
+      <ul class="prod-nav">
+        <li><a class="active" href="/libreria_lapicito/admin/index.php">inicio</a></li>
+       
+        <?php if (can('productos.ver')): ?>
         <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
+        <?php endif; ?>
+        <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
+        <?php if (can('inventario.ver')): ?>
         <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
+        <?php endif; ?>
+        <?php if (can('pedidos.aprobar')): ?>
         <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
+        <?php endif; ?>
+        <?php if (can('alertas.ver')): ?>
         <li><a href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
+        <?php endif; ?>
+        <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
         <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
+        <?php endif; ?>
+         <?php if (can('ventas.rapidas')): ?>
+        <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
+        <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar')): ?>
+        <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
+        <?php endif; ?>
         <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
+        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
       </ul>
-    </div>
+    </aside>
 
-    <?php if(!empty($notes)): ?>
-      <div class="card">
-        <h6>Notas</h6>
-        <ul><?php foreach($notes as $n): ?><li><?= htmlspecialchars($n) ?></li><?php endforeach; ?></ul>
+    
+    <main class="prod-main">
+      <div class="inv-title">Panel administrativo</div>
+
+      <?php if ($warns): ?>
+        <div class="lp-card" style="border:1px solid #f5d08a;background:#fff9e8;padding:10px;border-radius:10px;margin-bottom:10px">
+          <?php foreach($warns as $w) echo '<div>'.$w.'</div>'; ?>
+        </div>
+      <?php endif; ?>
+
+      <!-- KPIs -->
+      <div class="row">
+        <div class="three columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Productos</h5></div>
+            <div style="font-size:26px;font-weight:700"><?= number_format($total_productos,0,',','.') ?></div>
+            <div class="muted">Sin stock: <?= number_format($prod_sin_stock,0,',','.') ?></div>
+          </div>
+        </div>
+        <div class="three columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Categorías</h5></div>
+            <div style="font-size:26px;font-weight:700"><?= number_format($total_categorias,0,',','.') ?></div>
+            <div class="muted">Subcategorías: <?= number_format($total_subcategorias,0,',','.') ?></div>
+          </div>
+        </div>
+        <div class="three columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Proveedores</h5></div>
+            <div style="font-size:26px;font-weight:700"><?= number_format($total_proveedores,0,',','.') ?></div>
+            <div class="muted">Stock total: <?= number_format($stock_total,0,',','.') ?></div>
+          </div>
+        </div>
+        <div class="three columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Ventas hoy</h5></div>
+            <div style="font-size:26px;font-weight:700">$ <?= number_format($ventas_hoy,2,',','.') ?></div>
+            <div class="muted" style="color:#b94a48">Bajo stock: <?= number_format($alertas_bajo,0,',','.') ?></div>
+          </div>
+        </div>
       </div>
-    <?php endif; ?>
+
+      <!-- Filtros de rango -->
+    <form method="get" class="prod-filters range">
+  <span class="dr-label">Rango</span>
+  <div class="dr-fields">
+    <input type="date" name="desde" value="<?= h($desde) ?>" aria-label="Desde">
+    <span class="dr-sep">→</span>
+    <input type="date" name="hasta" value="<?= h($hasta) ?>" aria-label="Hasta">
   </div>
+ <button class="btn" type="submit">aplicar</button>
+  <a class="btn outline dr-clear" href="/libreria_lapicito/admin/index.php">Limpiar</a>
+</form>
 
-  <div class="nine columns">
-    <div class="card">
-      <form class="row" method="get">
-        <div class="four columns">
-          <label>Desde</label>
-          <input class="u-full-width" type="date" name="desde" value="<?= htmlspecialchars($desde) ?>">
-        </div>
-        <div class="four columns">
-          <label>Hasta</label>
-          <input class="u-full-width" type="date" name="hasta" value="<?= htmlspecialchars($hasta) ?>">
-        </div>
-        <div class="four columns" style="margin-top:25px">
-          <button class="button-primary" type="submit">Aplicar</button>
-          <a class="button button-outline" href="?">Limpiar</a>
-        </div>
-      </form>
-    </div>
 
-    <div class="row">
-      <div class="four columns">
-        <div class="card kpi">
-          <div>
-            <div class="muted">Productos</div>
-            <div class="big"><?= number_format($totProductos) ?></div>
+      <div class="row">
+        <!-- Ventas por mes -->
+        <div class="six columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Ventas por mes (últimos 12)</h5></div>
+            <div class="table-wrap">
+              <table class="u-full-width">
+                <thead><tr><th>Mes</th><th>Total $</th></tr></thead>
+                <tbody>
+                  <?php if ($ventas_mes): foreach($ventas_mes as $r): ?>
+                    <tr><td><?= h($r['etiqueta']) ?></td><td>$ <?= number_format((float)$r['total'],2,',','.') ?></td></tr>
+                  <?php endforeach; else: ?>
+                    <tr><td colspan="2" class="muted">Sin datos.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top productos -->
+        <div class="six columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Top productos (<?= h($desde) ?> → <?= h($hasta) ?>)</h5></div>
+            <div class="table-wrap">
+              <table class="u-full-width">
+                <thead><tr><th>Producto</th><th style="width:120px">Unid.</th><th style="width:140px">Ingresos $</th></tr></thead>
+                <tbody>
+                  <?php if ($top_prod): foreach($top_prod as $r): ?>
+                    <tr>
+                      <td><?= h($r['nombre']) ?></td>
+                      <td><?= number_format((int)$r['unidades'],0,',','.') ?></td>
+                      <td>$ <?= number_format((float)$r['total'],2,',','.') ?></td>
+                    </tr>
+                  <?php endforeach; else: ?>
+                    <tr><td colspan="3" class="muted">Sin ventas en el rango.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-      <div class="four columns">
-        <div class="card kpi">
-          <div>
-            <div class="muted">Alertas stock</div>
-            <div class="big"><?= number_format($totBajoStock) ?></div>
+
+      <div class="row">
+        <!-- Ventas recientes -->
+        <div class="six columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Ventas recientes</h5></div>
+            <div class="table-wrap">
+              <table class="u-full-width">
+                <thead><tr><th>#</th><th>Fecha/Hora</th><th>Total $</th></tr></thead>
+                <tbody>
+                  <?php if ($ventas_recientes): foreach($ventas_recientes as $v): ?>
+                    <tr>
+                      <td>#<?= (int)$v['id_venta'] ?></td>
+                      <td><?= h($v['fecha_hora'] ?? '—') ?></td>
+                      <td>$ <?= number_format((float)($v['total'] ?? 0),2,',','.') ?></td>
+                    </tr>
+                  <?php endforeach; else: ?>
+                    <tr><td colspan="3" class="muted">Sin ventas registradas.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock por categoría -->
+        <div class="six columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Stock por categoría</h5></div>
+            <div class="table-wrap">
+              <table class="u-full-width">
+                <thead><tr><th>Categoría</th><th style="width:140px">Stock total</th></tr></thead>
+                <tbody>
+                  <?php if ($stock_cat): foreach($stock_cat as $r): ?>
+                    <tr><td><?= h($r['categoria'] ?? '—') ?></td><td><?= number_format((int)$r['cant'],0,',','.') ?></td></tr>
+                  <?php endforeach; else: ?>
+                    <tr><td colspan="2" class="muted">Sin datos.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-      <div class="four columns">
-        <div class="card kpi">
-          <div>
-            <div class="muted">Ventas hoy</div>
-            <div class="big">$ <?= number_format($ventasHoy,2) ?></div>
+
+      <div class="row">
+        <!-- Bajo stock -->
+        <div class="six columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Alertas: bajo stock</h5></div>
+            <div class="table-wrap">
+              <table class="u-full-width">
+                <thead><tr><th>Producto</th><th style="width:120px">Stock</th><th style="width:140px">Mínimo</th></tr></thead>
+                <tbody>
+                  <?php if ($low_list): foreach($low_list as $r):
+                    $st  = (int)$r['st']; $min = (int)$r['smin']; ?>
+                    <tr>
+                      <td><?= h($r['nombre']) ?></td>
+                      <td><span class="badge no"><?= $st ?></span></td>
+                      <td><?= $min ?></td>
+                    </tr>
+                  <?php endforeach; else: ?>
+                    <tr><td colspan="3" class="muted">Sin alertas.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pedidos pendientes -->
+        <div class="six columns">
+          <div class="prod-card">
+            <div class="prod-head">
+              <h5>Pedidos pendientes</h5>
+              <?php if (can('pedidos.aprobar')): ?>
+              <div><a class="btn-sm" href="/libreria_lapicito/admin/pedidos/">Ir a pedidos</a></div>
+              <?php endif; ?>
+            </div>
+            <div class="table-wrap">
+              <table class="u-full-width">
+                <thead><tr><th>#</th><th>Proveedor</th><th>Estado</th></tr></thead>
+                <tbody>
+                  <?php if ($ped_pend): foreach($ped_pend as $p): ?>
+                    <tr>
+                      <td>#<?= (int)$p['id_pedido'] ?></td>
+                      <td><?= h($p['proveedor'] ?? '—') ?></td>
+                      <td><?= h($p['estado'] ?? 'Pendiente') ?></td>
+                    </tr>
+                  <?php endforeach; else: ?>
+                    <tr><td colspan="3" class="muted">No hay pedidos pendientes.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="card">
-      <h6>Ventas (últimos 12 meses)</h6>
-      <canvas id="chartMensual" height="120"></canvas>
-      <?php if(empty($chartMensualLabels)): ?><p class="muted">Sin datos.</p><?php endif; ?>
-    </div>
+      <div class="row">
+        <!-- Movimientos recientes -->
+        <div class="six columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Movimientos de stock (recientes)</h5></div>
+            <div class="table-wrap">
+              <table class="u-full-width">
+                <thead><tr><th>#</th><th>Tipo</th><th style="width:120px">Unidades</th></tr></thead>
+                <tbody>
+                  <?php if ($mov_rec): foreach($mov_rec as $m): ?>
+                    <tr>
+                      <td>#<?= (int)$m['id_movimiento'] ?></td>
+                      <td><?= h($m['tipo'] ?? '—') ?></td>
+                      <td><?= number_format((int)($m['unidades'] ?? 0),0,',','.') ?></td>
+                    </tr>
+                  <?php endforeach; else: ?>
+                    <tr><td colspan="3" class="muted">Sin movimientos.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
-    <div class="row">
-      <div class="six columns">
-        <div class="card">
-          <h6>Top productos (<?= htmlspecialchars($desde) ?> → <?= htmlspecialchars($hasta) ?>)</h6>
-          <canvas id="chartTop" height="140"></canvas>
-          <?php if(empty($chartTopLabels)): ?><p class="muted">Sin ventas en el rango.</p><?php endif; ?>
+        <!-- Alertas  -->
+        <div class="six columns">
+          <div class="prod-card">
+            <div class="prod-head"><h5>Alertas (tabla)</h5></div>
+            <div class="table-wrap">
+              <table class="u-full-width">
+                <thead><tr><th>#</th><th>Tipo</th><th>Producto</th><th style="width:120px">Atendida</th></tr></thead>
+                <tbody>
+                  <?php if ($alertas_tbl): foreach($alertas_tbl as $a): ?>
+                    <tr>
+                      <td>#<?= (int)$a['id_alerta'] ?></td>
+                      <td><?= h($a['tipo'] ?? '—') ?></td>
+                      <td><?= h($a['producto'] ?? '—') ?></td>
+                      <td><?= isset($a['atendida']) ? ( ((int)$a['atendida']) ? 'Sí' : 'No' ) : '—' ?></td>
+                    </tr>
+                  <?php endforeach; else: ?>
+                    <tr><td colspan="4" class="muted">Sin alertas registradas.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="six columns">
-        <div class="card">
-          <h6>Ingresos por categoría</h6>
-          <canvas id="chartIng" height="140"></canvas>
-          <?php if(empty($chartIngLabels)): ?><p class="muted">Sin movimientos de entrada.</p><?php endif; ?>
-        </div>
-      </div>
-    </div>
 
-    <div class="row">
-      <div class="six columns">
-        <div class="card table-wrap">
-          <h6>Alertas recientes</h6>
-          <table class="u-full-width">
-            <thead><tr><th>ID</th><th>Producto</th><th>Fecha</th><th>Atendida</th></tr></thead>
-            <tbody>
-            <?php foreach($alertas as $a): ?>
-              <tr>
-                <td>#<?= (int)$a['id_alerta'] ?></td>
-                <td><?= htmlspecialchars($a['producto'] ?? ('ID '.$a['id_producto'])) ?></td>
-                <td><?= htmlspecialchars($a['fecha_creada'] ?? '') ?></td>
-                <td><?= ((int)($a['atendida']??0)===1)?'<span class="badge ok">Sí</span>':'<span class="badge no">No</span>' ?></td>
-              </tr>
-            <?php endforeach; ?>
-            <?php if(empty($alertas)): ?><tr><td colspan="4" class="muted">Sin alertas.</td></tr><?php endif; ?>
-            </tbody>
-          </table>
+      
+      <div class="prod-card">
+        <div class="prod-head"><h5>Acciones rápidas</h5></div>
+        <div class="row">
+          <?php if (can('productos.crear')): ?>
+          <div class="four columns"><a class="btn" href="/libreria_lapicito/admin/productos/crear.php">+ Nuevo producto</a></div>
+          <?php endif; ?>
+          <?php if (can('inventario.ingresar')): ?>
+          <div class="four columns"><a class="btn" href="/libreria_lapicito/admin/inventario/ingresar.php">+ Ingreso de stock</a></div>
+          <?php endif; ?>
+          <?php if (can('ventas.rapidas')): ?>
+          <div class="four columns"><a class="btn" href="/libreria_lapicito/admin/ventas/rapida.php"> Venta rápida</a></div>
+          <?php endif; ?>
         </div>
       </div>
-      <div class="six columns">
-        <div class="card table-wrap">
-          <h6>Pedidos pendientes</h6>
-          <table class="u-full-width">
-            <thead><tr><th>#</th><th>Proveedor</th><th>Fecha</th></tr></thead>
-            <tbody>
-            <?php foreach($pend as $p): ?>
-              <tr>
-                <td>#<?= (int)$p['id_pedido'] ?></td>
-                <td><?= htmlspecialchars($p['proveedor'] ?? '—') ?></td>
-                <td><?= htmlspecialchars($p['fecha_creado'] ?? '') ?></td>
-              </tr>
-            <?php endforeach; ?>
-            <?php if(empty($pend)): ?><tr><td colspan="3" class="muted">Sin pedidos pendientes.</td></tr><?php endif; ?>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
+    </main>
   </div>
-</div>
-
-<?php
-
-$extra_js = '<script>
-const ventasMensualesLabels = '.json_encode($chartMensualLabels).';
-const ventasMensualesData   = '.json_encode($chartMensualData).';
-const topLabels = '.json_encode($chartTopLabels).';
-const topData   = '.json_encode($chartTopData).';
-const ingLabels = '.json_encode($chartIngLabels).';
-const ingData   = '.json_encode($chartIngData).';
-
-if (ventasMensualesLabels.length) {
-  new Chart(document.getElementById("chartMensual"), {
-    type:"line",
-    data:{ labels:ventasMensualesLabels, datasets:[{ label:"Ventas $", data:ventasMensualesData, tension:.25 }]},
-    options:{ responsive:true, scales:{ y:{ beginAtZero:true } } }
-  });
-}
-if (topLabels.length) {
-  new Chart(document.getElementById("chartTop"), {
-    type:"bar",
-    data:{ labels:topLabels, datasets:[{ label:"Unidades", data:topData }]},
-    options:{ indexAxis:"y", responsive:true, scales:{ x:{ beginAtZero:true } } }
-  });
-}
-if (ingLabels.length) {
-  new Chart(document.getElementById("chartIng"), {
-    type:"bar",
-    data:{ labels:ingLabels, datasets:[{ label:"Ingresos", data:ingData }]},
-    options:{ responsive:true, scales:{ y:{ beginAtZero:true } } }
-  });
-}
-</script>';
-include(__DIR__ . '/../includes/footer.php');
+</body>
+</html>
