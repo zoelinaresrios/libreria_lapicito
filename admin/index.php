@@ -214,6 +214,7 @@ $alertas_tbl = q_all($conexion,"
         <?php endif; ?>
         <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
         <?php if (can('inventario.ver')): ?>
+           <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
         <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
         <?php endif; ?>
         <?php if (can('pedidos.aprobar')): ?>
