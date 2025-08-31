@@ -1,26 +1,20 @@
 <?php
-
+// /libreria_lapicito/admin/productos/index.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
-$HAS_ACL = file_exists(__DIR__ . '/../includes/acl.php');
-if ($HAS_ACL) {
-  require_once __DIR__ . '/../includes/acl.php';
-} else {
-  
-  if (session_status()===PHP_SESSION_NONE) session_start();
-  if (!function_exists('can')) { function can($k){ return true; } }
-  if (!function_exists('require_perm')) { function require_perm($k){ return true; } }
-}
 
 if (function_exists('is_logged') && !is_logged()) {
   header('Location: /libreria_lapicito/admin/login.php'); exit;
 }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
- 
+
+/* ===========================
+   Filtros / Paginación
+   =========================== */
 $q       = trim($_GET['q'] ?? '');
 $id_cat  = (int)($_GET['cat'] ?? 0);
-$stock_f = $_GET['stock'] ?? '';           
+$stock_f = $_GET['stock'] ?? '';            // '', 'bajo', 'sin'
 $page    = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 15;
 $offset  = ($page - 1) * $perPage;
@@ -30,7 +24,9 @@ $cats = [];
 $rC = $conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
 while ($row = $rC->fetch_assoc()) { $cats[] = $row; }
 
-
+/* ===========================
+   WHERE + HAVING dinámicos
+   =========================== */
 $baseFrom = "
   FROM producto p
   LEFT JOIN subcategoria sc ON sc.id_subcategoria = p.id_subcategoria
@@ -48,7 +44,9 @@ if ($stock_f === 'bajo') { $having[] = "COALESCE(SUM(i.stock_actual),0) <= COALE
 if ($stock_f === 'sin')  { $having[] = "COALESCE(SUM(i.stock_actual),0) = 0"; }
 $havingSql = $having ? ('HAVING '.implode(' AND ', $having)) : '';
 
-
+/* ===========================
+   Conteo total
+   =========================== */
 $sqlCount = "
   SELECT COUNT(*) AS total
   FROM (
@@ -66,6 +64,7 @@ $total = (int)($st->get_result()->fetch_assoc()['total'] ?? 0);
 $st->close();
 $pages = max(1, (int)ceil($total / $perPage));
 
+/
 $sqlList = "
   SELECT
     p.id_producto,
@@ -104,46 +103,21 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 </head>
 <body>
 
-
   <div class="barra"></div>
-    <div class="prod-shell">
+  <div class="inv-title">Gestión de Inventario</div>
+
+  <div class="prod-shell">
+
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-       
-        <?php if (can('productos.ver')): ?>
-        <li><a  class="active" href="/libreria_lapicito/admin/productos/">Productos</a></li>
-        <?php endif; ?>
-         <li><a   href="/libreria_lapicito/admin/categorias/">categorias</a></li>
-        <?php if (can('inventario.ver')): ?>
-        <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
-        <?php endif; ?>
-        <?php if (can('pedidos.aprobar')): ?>
-        <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
-        <?php endif; ?>
-        <?php if (can('alertas.ver')): ?>
-        <li><a href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
-        <?php endif; ?>
-        <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
-        <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
-        <?php endif; ?>
-         <?php if (can('ventas.rapidas')): ?>
+        <li><a class="active" href="/libreria_lapicito/admin/productos/">Productos</a></li>
+        <li><a href="/libreria_lapicito/admin/categorias/">Categorías</a></li>
         <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
-        <?php endif; ?>
-        <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
-        <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
-        <?php endif; ?>
-        <?php if (can('usuarios.gestionar')): ?>
-        <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
-        <?php endif; ?>
-        <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+        <li><a href="/libreria_lapicito/admin/proveedores/">Proveedores</a></li>
+        <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
+        <li><a href="/libreria_lapicito/admin/box/">Box</a></li>
       </ul>
     </aside>
-
-    
-    <main class="prod-main">
-      <div class="inv-title">Panel administrativo- Productos</div>
 
     <!-- Main -->
     <main class="prod-main">
@@ -188,7 +162,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
                 <th style="width:120px">Stock</th>
                 <th style="width:120px">Precio</th>
                 <th style="width:80px">editar</th>
-               <th style="width:80px">eliminar</th>
+              
               </tr>
             </thead>
             <tbody>
@@ -216,10 +190,8 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
                       Editar
                     </a>
                   </td>
-                    <td>
-                    <a class="btn-sm" href="/libreria_lapicito/admin/productos/eliminar.php?id=<?= (int)$r['id_producto'] ?>">
-                     eliminar
-                    </a>
+                  <td>
+                  
                   </td>
                 </tr>
               <?php endforeach; ?>
