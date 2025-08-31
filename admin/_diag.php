@@ -19,6 +19,7 @@ try {
     exit;
   }
 
+  
   // Columnas reales de usuario (para ver si coinciden con tu SELECT)
   $cols = $cn->query("SHOW COLUMNS FROM usuario")->fetch_all(MYSQLI_ASSOC);
   echo "<pre>"; print_r($cols); echo "</pre>";
