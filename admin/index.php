@@ -28,6 +28,7 @@ $desde = $_GET['desde'] ?? date('Y-m-d', strtotime('-30 days'));
 $hasta = $_GET['hasta'] ?? $hoy;
 if (strtotime($hasta) < strtotime($desde)) { $tmp=$desde; $desde=$hasta; $hasta=$tmp; }
 
+
 function q_one(mysqli $cn, string $sql, string $types = '', array $params = []) {
   global $warns;
   try {
