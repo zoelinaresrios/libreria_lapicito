@@ -1,5 +1,4 @@
 <?php
-// /libreria_lapicito/admin/pedidos/index.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
@@ -15,114 +14,92 @@ require_perm('pedidos.ver');
 if (session_status()===PHP_SESSION_NONE) session_start();
 if (empty($_SESSION['csrf'])) $_SESSION['csrf']=bin2hex(random_bytes(16));
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-/* ---------- Cambio de estado (POST) ---------- */
+$estados = [];
+$re = $conexion->query("SELECT id_estado_pedido, nombre_estado FROM estado_pedido ORDER BY id_estado_pedido");
+while($row=$re->fetch_assoc()) $estados[]=$row;
+
+
 $errors=[];
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['accion']) && $_POST['accion']==='cambiar_estado') {
-  if (!can('pedidos.cambiar_estado')) { $errors[]='No tenés permiso para cambiar estados.'; }
-  if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) { $errors[]='Token inválido.'; }
+if ($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['accion'] ?? '')==='cambiar_estado') {
+  if (!can('pedidos.cambiar_estado')) $errors[]='No tenés permiso para cambiar estados.';
+  if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) $errors[]='Token inválido.';
 
   $id_pedido = (int)($_POST['id_pedido'] ?? 0);
-  $dest      = $_POST['estado'] ?? '';
+  $id_estado = (int)($_POST['id_estado_pedido'] ?? 0);
 
-  $valid = ['borrador','enviado','recibido','cancelado'];
-  if ($id_pedido<=0 || !in_array($dest, $valid, true)) { $errors[]='Datos inválidos.'; }
+  if ($id_pedido<=0 || $id_estado<=0) $errors[]='Datos inválidos.';
 
   if (!$errors) {
-    // leer estado actual
-    $st = $conexion->prepare("SELECT estado FROM pedido WHERE id_pedido=?");
-    $st->bind_param('i', $id_pedido); $st->execute();
-    $row = $st->get_result()->fetch_assoc(); $st->close();
-    if (!$row) { $errors[]='Pedido inexistente.'; }
-    else {
-      $orig = $row['estado'];
-      $okTrans = false;
-      // Transiciones permitidas
-      if ($orig==='borrador' && $dest==='enviado') $okTrans=true;
-      if ($orig==='enviado' && $dest==='recibido') $okTrans=true;
-      if (in_array($orig, ['borrador','enviado'], true) && $dest==='cancelado') $okTrans=true;
+    
+    $st=$conexion->prepare("SELECT 1 FROM estado_pedido WHERE id_estado_pedido=?");
+    $st->bind_param('i',$id_estado); $st->execute();
+    if(!$st->get_result()->fetch_row()) $errors[]='Estado inválido.';
+    $st->close();
 
-      if (!$okTrans) { $errors[]="Transición no permitida ($orig → $dest)."; }
-      else {
-        try{
-          $conexion->begin_transaction();
-          $st=$conexion->prepare("UPDATE pedido SET estado=? WHERE id_pedido=?");
-          $st->bind_param('si', $dest, $id_pedido);
-          $st->execute(); $st->close();
-          $conexion->commit();
-          $_SESSION['flash_ok']="Pedido #$id_pedido: estado cambiado a $dest.";
-          header('Location: '.$_SERVER['REQUEST_URI']); exit;
-        }catch(Exception $e){
-          $conexion->rollback();
-          $errors[]='No se pudo cambiar el estado: '.$e->getMessage();
-        }
+    if(!$errors){
+      try{
+        $st=$conexion->prepare("UPDATE pedido SET id_estado_pedido=?, fecha_estado=NOW() WHERE id_pedido=?");
+        $st->bind_param('ii',$id_estado,$id_pedido);
+        $st->execute(); $st->close();
+        $_SESSION['flash_ok']="Pedido #$id_pedido: estado actualizado.";
+        header('Location: '.$_SERVER['REQUEST_URI']); exit;
+      }catch(Exception $e){
+        $errors[]='No se pudo cambiar el estado: '.$e->getMessage();
       }
     }
   }
 }
 
-/* ---------- Filtros ---------- */
-$q      = trim($_GET['q'] ?? '');         // busca por id o comentario
-$estado = $_GET['estado'] ?? '';          // '', borrador, enviado, recibido, cancelado
-$desde  = trim($_GET['desde'] ?? '');     // YYYY-MM-DD
-$hasta  = trim($_GET['hasta'] ?? '');     // YYYY-MM-DD
-
+$q       = trim($_GET['q'] ?? '');          
+$estado  = (int)($_GET['estado'] ?? 0);    
+$desde   = trim($_GET['desde'] ?? '');      
+$hasta   = trim($_GET['hasta'] ?? '');    
 $page    = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 15;
 $offset  = ($page - 1) * $perPage;
 
-/* ---------- WHERE ---------- */
-$where = []; $params=[]; $types='';
+$where=[]; $params=[]; $types='';
 if ($q!=='') {
   if (ctype_digit($q)) {
-    $where[] = "(p.id_pedido = ? OR p.comentario LIKE ?)";
+    $where[]="(p.id_pedido=? OR p.observacion LIKE ?)";
     $params[]=(int)$q; $types.='i';
     $params[]='%'.$q.'%'; $types.='s';
   } else {
-    $where[] = "p.comentario LIKE ?";
-    $params[]='%'.$q.'%'; $types.='s';
+    $where[]="p.observacion LIKE ?"; $params[]='%'.$q.'%'; $types.='s';
   }
 }
-if (in_array($estado, ['borrador','enviado','recibido','cancelado'], true)) {
-  $where[]="p.estado=?"; $params[]=$estado; $types.='s';
-}
-if ($desde!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$desde)) {
-  $where[]="p.creado_en >= CONCAT(?, ' 00:00:00')"; $params[]=$desde; $types.='s';
-}
-if ($hasta!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$hasta)) {
-  $where[]="p.creado_en <= CONCAT(?, ' 23:59:59')"; $params[]=$hasta; $types.='s';
-}
-$whereSql = $where ? ('WHERE '.implode(' AND ', $where)) : '';
+if ($estado>0) { $where[]="p.id_estado_pedido=?"; $params[]=$estado; $types.='i'; }
+if ($desde!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$desde)) { $where[]="p.fecha_creado >= CONCAT(?, ' 00:00:00')"; $params[]=$desde; $types.='s'; }
+if ($hasta!=='' && preg_match('/^\d{4}-\d{2}-\d{2}$/',$hasta)) { $where[]="p.fecha_creado <= CONCAT(?, ' 23:59:59')"; $params[]=$hasta; $types.='s'; }
+$whereSql = $where ? ('WHERE '.implode(' AND ',$where)) : '';
 
-/* ---------- Conteo ---------- */
-$sqlCount = "
-  SELECT COUNT(*) total
-  FROM pedido p
-  $whereSql
-";
+
+$sqlCount = "SELECT COUNT(*) total FROM pedido p $whereSql";
 $st=$conexion->prepare($sqlCount);
 if ($types) $st->bind_param($types, ...$params);
 $st->execute();
-$total = (int)($st->get_result()->fetch_assoc()['total'] ?? 0);
+$total=(int)($st->get_result()->fetch_assoc()['total'] ?? 0);
 $st->close();
-$pages = max(1, (int)ceil($total / $perPage));
+$pages=max(1,(int)ceil($total/$perPage));
 
-/* ---------- Listado con totales ---------- */
+
 $sqlList = "
   SELECT
     p.id_pedido,
-    p.estado,
-    p.comentario,
-    p.creado_en,
-    COUNT(pi.id_item) AS items,
-    COALESCE(SUM(pi.cantidad * COALESCE(pi.precio_unitario,0)),0) AS total
+    p.fecha_creado,
+    p.id_estado_pedido,
+    ep.nombre_estado AS estado_nombre,
+    p.observacion,
+    COUNT(pd.id_pedido_detalle) AS items,
+    COALESCE(SUM(pd.cantidad_solicitada * COALESCE(pd.precio_unitario,0)),0) AS total
   FROM pedido p
-  LEFT JOIN pedido_item pi ON pi.id_pedido=p.id_pedido
+  LEFT JOIN estado_pedido ep ON ep.id_estado_pedido=p.id_estado_pedido
+  LEFT JOIN pedido_detalle pd ON pd.id_pedido=p.id_pedido
   $whereSql
-  GROUP BY p.id_pedido, p.estado, p.comentario, p.creado_en
-  ORDER BY p.creado_en DESC, p.id_pedido DESC
+  GROUP BY p.id_pedido, p.fecha_creado, p.id_estado_pedido, estado_nombre, p.observacion
+  ORDER BY p.fecha_creado DESC, p.id_pedido DESC
   LIMIT ? OFFSET ?
 ";
 $typesList=$types.'ii';
@@ -133,6 +110,16 @@ $st->bind_param($typesList, ...$paramsList);
 $st->execute();
 $rows=$st->get_result()->fetch_all(MYSQLI_ASSOC);
 $st->close();
+
+function badge_class($estado_nombre){
+  $e=strtolower($estado_nombre ?? '');
+  if ($e==='borrador') return 'muted';
+  if ($e==='enviado')  return 'warn';
+  if ($e==='recibido') return 'ok';
+  if ($e==='aprobado') return 'ok';
+  if ($e==='cancelado')return 'no';
+  return '';
+}
 ?>
 <!doctype html>
 <html lang="es">
@@ -148,7 +135,7 @@ $st->close();
   <div class="barra"></div>
 
   <div class="prod-shell">
-        <aside class="prod-side">
+    <aside class="prod-side">
       <ul class="prod-nav">
         <li><a  href="/libreria_lapicito/admin/index.php">inicio</a></li>
        
@@ -173,7 +160,7 @@ $st->close();
         <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
-        <li><a  href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
+        <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar')): ?>
         <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
@@ -183,7 +170,7 @@ $st->close();
       </ul>
     </aside>
 
-
+    
     <main class="prod-main">
       <div class="inv-title">Panel administrativo — Pedidos</div>
 
@@ -202,89 +189,62 @@ $st->close();
           <?php endif; ?>
         </div>
 
-        <!-- Filtros -->
+      
         <form class="prod-filters" method="get">
-          <input class="input-search" type="text" name="q" value="<?= h($q) ?>" placeholder="Buscar por ID o comentario…">
+          <input class="input-search" type="text" name="q" value="<?= h($q) ?>" placeholder="Buscar por #ID u observación…">
           <select name="estado">
-            <option value="">Estado: Todos</option>
-            <?php
-              $opts=['borrador'=>'Borrador','enviado'=>'Enviado','recibido'=>'Recibido','cancelado'=>'Cancelado'];
-              foreach($opts as $val=>$lab):
-            ?>
-              <option value="<?= $val ?>" <?= $estado===$val?'selected':'' ?>><?= $lab ?></option>
+            <option value="0">Estado: Todos</option>
+            <?php foreach($estados as $e): ?>
+              <option value="<?= (int)$e['id_estado_pedido'] ?>" <?= $estado===(int)$e['id_estado_pedido']?'selected':'' ?>>
+                <?= h($e['nombre_estado']) ?>
+              </option>
             <?php endforeach; ?>
           </select>
-          <input type="date" name="desde" value="<?= h($desde) ?>" placeholder="Desde">
-          <input type="date" name="hasta" value="<?= h($hasta) ?>" placeholder="Hasta">
+          <input type="date" name="desde" value="<?= h($desde) ?>">
+          <input type="date" name="hasta" value="<?= h($hasta) ?>">
           <button class="btn-filter" type="submit">Filtrar</button>
         </form>
 
-        <!-- Tabla -->
+        
         <div class="table-wrap">
           <table class="u-full-width">
             <thead>
               <tr>
                 <th style="width:90px">#ID</th>
-                <th style="width:160px">Fecha</th>
-                <th style="width:140px">Estado</th>
-                <th>Comentario</th>
+                <th style="width:170px">Fecha</th>
+                <th style="width:160px">Estado</th>
+                <th>Observación</th>
                 <th style="width:120px">Ítems</th>
                 <th style="width:140px">Total</th>
-                <th style="width:220px">Acciones</th>
+                <th style="width:260px">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <?php foreach($rows as $r): ?>
                 <tr>
                   <td>#<?= (int)$r['id_pedido'] ?></td>
-                  <td><?= h($r['creado_en']) ?></td>
-                  <td>
-                    <?php
-                      $est = $r['estado'];
-                      $badge = ($est==='borrador'?'muted':($est==='enviado'?'warn':($est==='recibido'?'ok':'no')));
-                      echo '<span class="badge '.$badge.'">'.h(ucfirst($est)).'</span>';
-                    ?>
-                  </td>
-                  <td><?= h($r['comentario'] ?? '') ?></td>
+                  <td><?= h($r['fecha_creado']) ?></td>
+                  <td><span class="badge <?= badge_class($r['estado_nombre']) ?>"><?= h($r['estado_nombre'] ?? '—') ?></span></td>
+                  <td><?= h($r['observacion'] ?? '') ?></td>
                   <td><?= (int)$r['items'] ?></td>
                   <td>$ <?= number_format((float)$r['total'], 2, ',', '.') ?></td>
                   <td>
                     <a class="btn-sm" href="/libreria_lapicito/admin/pedidos/ver.php?id=<?= (int)$r['id_pedido'] ?>">Ver</a>
 
                     <?php if (can('pedidos.cambiar_estado')): ?>
-                      <?php if ($r['estado']==='borrador'): ?>
-                        <form method="post" style="display:inline">
-                          <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
-                          <input type="hidden" name="accion" value="cambiar_estado">
-                          <input type="hidden" name="id_pedido" value="<?= (int)$r['id_pedido'] ?>">
-                          <input type="hidden" name="estado" value="enviado">
-                          <button class="btn-sm">Enviar</button>
-                        </form>
-                        <form method="post" style="display:inline">
-                          <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
-                          <input type="hidden" name="accion" value="cambiar_estado">
-                          <input type="hidden" name="id_pedido" value="<?= (int)$r['id_pedido'] ?>">
-                          <input type="hidden" name="estado" value="cancelado">
-                          <button class="btn-sm btn-muted">Cancelar</button>
-                        </form>
-                      <?php elseif ($r['estado']==='enviado'): ?>
-                        <form method="post" style="display:inline">
-                          <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
-                          <input type="hidden" name="accion" value="cambiar_estado">
-                          <input type="hidden" name="id_pedido" value="<?= (int)$r['id_pedido'] ?>">
-                          <input type="hidden" name="estado" value="recibido">
-                          <button class="btn-sm">Recibido</button>
-                        </form>
-                        <form method="post" style="display:inline">
-                          <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
-                          <input type="hidden" name="accion" value="cambiar_estado">
-                          <input type="hidden" name="id_pedido" value="<?= (int)$r['id_pedido'] ?>">
-                          <input type="hidden" name="estado" value="cancelado">
-                          <button class="btn-sm btn-muted">Cancelar</button>
-                        </form>
-                      <?php else: ?>
-                   
-                      <?php endif; ?>
+                      <form method="post" style="display:inline">
+                        <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+                        <input type="hidden" name="accion" value="cambiar_estado">
+                        <input type="hidden" name="id_pedido" value="<?= (int)$r['id_pedido'] ?>">
+                        <select name="id_estado_pedido" style="max-width:140px">
+                          <?php foreach($estados as $e): ?>
+                            <option value="<?= (int)$e['id_estado_pedido'] ?>" <?= ((int)$r['id_estado_pedido']===(int)$e['id_estado_pedido'])?'selected':'' ?>>
+                              <?= h($e['nombre_estado']) ?>
+                            </option>
+                          <?php endforeach; ?>
+                        </select>
+                        <button class="btn-sm">Actualizar</button>
+                      </form>
                     <?php endif; ?>
                   </td>
                 </tr>
@@ -296,6 +256,7 @@ $st->close();
           </table>
         </div>
 
+        
         <?php if ($pages>1): ?>
           <div class="prod-pager">
             <?php for($p=1;$p<=$pages;$p++):

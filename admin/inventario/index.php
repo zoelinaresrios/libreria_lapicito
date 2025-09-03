@@ -1,5 +1,4 @@
 <?php
-// /libreria_lapicito/admin/inventario/index.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
@@ -20,18 +19,18 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 // Filtros
 $q       = trim($_GET['q'] ?? '');
 $id_cat  = (int)($_GET['cat'] ?? 0);
-$stock_f = $_GET['stock'] ?? ''; // '', 'bajo', 'sin'
+$stock_f = $_GET['stock'] ?? ''; //  bajo, sin
 
 $page    = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 15;
 $offset  = ($page - 1) * $perPage;
 
-// Catálogo de categorías
+
 $cats = [];
 $rC = $conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
 while ($row = $rC->fetch_assoc()) $cats[] = $row;
 
-// Base FROM
+
 $baseFrom = "
   FROM producto p
   LEFT JOIN subcategoria sc ON sc.id_subcategoria = p.id_subcategoria
@@ -39,19 +38,19 @@ $baseFrom = "
   LEFT JOIN inventario i    ON i.id_producto      = p.id_producto
 ";
 
-// WHERE dinámico
+
 $where = []; $params = []; $types = '';
 if ($q!=='')      { $where[]="(p.nombre LIKE ? OR p.id_producto=?)"; $params[]="%$q%"; $params[]=(int)$q; $types.='si'; }
 if ($id_cat>0)    { $where[]="c.id_categoria=?"; $params[]=$id_cat; $types.='i'; }
 $whereSql = $where ? ('WHERE '.implode(' AND ', $where)) : '';
 
-// HAVING por estado de stock
+
 $having = [];
 if ($stock_f==='bajo') $having[] = "COALESCE(i.stock_actual,0) <= COALESCE(i.stock_minimo,0)";
 if ($stock_f==='sin')  $having[] = "COALESCE(i.stock_actual,0) = 0";
 $havingSql = $having ? ('HAVING '.implode(' AND ', $having)) : '';
 
-// Conteo para paginar
+
 $sqlCount = "
   SELECT COUNT(*) AS total
   FROM (
@@ -166,7 +165,7 @@ $st->close();
           </div>
         </div>
 
-        <!-- Filtros -->
+
         <form class="prod-filters" method="get">
           <input class="input-search" type="text" name="q" value="<?= h($q) ?>" placeholder="Buscar por nombre o ID…">
           <select name="cat">
@@ -185,7 +184,7 @@ $st->close();
           <button class="btn-filter" type="submit">Filtrar</button>
         </form>
 
-        <!-- Tabla -->
+
         <div class="table-wrap">
           <table class="u-full-width">
             <thead>
@@ -229,7 +228,7 @@ $st->close();
           </table>
         </div>
 
-        <!-- Paginación -->
+     
         <?php if ($pages>1): ?>
           <div class="prod-pager">
             <?php for($p=1;$p<=$pages;$p++):
