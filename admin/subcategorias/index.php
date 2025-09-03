@@ -79,16 +79,43 @@ $st->close();
 <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
 </head><body>
 <div class="barra"></div>
-<div class="prod-shell">
-  <aside class="prod-side">
-    <ul class="prod-nav">
-      <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-      <li><a href="/libreria_lapicito/admin/categorias/">Categorías</a></li>
-      <li><a class="active" href="/libreria_lapicito/admin/subcategorias/">Subcategorías</a></li>
-      <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
-    </ul>
-  </aside>
+  <div class="prod-shell">
+    <aside class="prod-side">
+      <ul class="prod-nav">
+        <li><a  href="/libreria_lapicito/admin/index.php">inicio</a></li>
+       
+        <?php if (can('productos.ver')): ?>
+        <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
+        <?php endif; ?>
+        <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
+        <?php if (can('inventario.ver')): ?>
+           <li><a class="active" href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
+        <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
+        <?php endif; ?>
+        <?php if (can('pedidos.aprobar')): ?>
+        <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
+        <?php endif; ?>
+        <?php if (can('alertas.ver')): ?>
+        <li><a href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
+        <?php endif; ?>
+        <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
+        <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
+        <?php endif; ?>
+         <?php if (can('ventas.rapidas')): ?>
+        <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
+        <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar')): ?>
+        <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
+        <?php endif; ?>
+        <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
+        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+      </ul>
+    </aside>
 
+    
   <main class="prod-main">
     <div class="inv-title">Panel administrativo — Subcategorías</div>
 

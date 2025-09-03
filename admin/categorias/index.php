@@ -104,15 +104,16 @@ $st->close();
   <div class="barra"></div>
 
   <div class="prod-shell">
-    
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-        
+        <li><a  href="/libreria_lapicito/admin/index.php">inicio</a></li>
+       
+        <?php if (can('productos.ver')): ?>
         <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
-        <li><a class="active" href="/libreria_lapicito/admin/categorias/">Categorías</a></li>
+        <?php endif; ?>
+        <li><a class="active" href="/libreria_lapicito/admin/categorias/">categorias</a></li>
         <?php if (can('inventario.ver')): ?>
-          
+           <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
         <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
         <?php endif; ?>
         <?php if (can('pedidos.aprobar')): ?>
@@ -124,7 +125,7 @@ $st->close();
         <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
         <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
         <?php endif; ?>
-        <?php if (can('ventas.rapidas')): ?>
+         <?php if (can('ventas.rapidas')): ?>
         <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
@@ -137,6 +138,8 @@ $st->close();
         <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
+
+    
 
     <main class="prod-main">
       <div class="inv-title">Panel administrativo — Categorías</div>

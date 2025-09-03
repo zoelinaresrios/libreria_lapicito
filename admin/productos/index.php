@@ -107,6 +107,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
   <div class="barra"></div>
     <div class="prod-shell">
+
     <aside class="prod-side">
       <ul class="prod-nav">
         <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
@@ -114,8 +115,9 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
         <?php if (can('productos.ver')): ?>
         <li><a  class="active" href="/libreria_lapicito/admin/productos/">Productos</a></li>
         <?php endif; ?>
-         <li><a   href="/libreria_lapicito/admin/categorias/">categorias</a></li>
+        <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
         <?php if (can('inventario.ver')): ?>
+           <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
         <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
         <?php endif; ?>
         <?php if (can('pedidos.aprobar')): ?>
@@ -141,7 +143,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
       </ul>
     </aside>
 
-    
+   
     <main class="prod-main">
       <div class="inv-title">Panel administrativo- Productos</div>
 
