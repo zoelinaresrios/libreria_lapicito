@@ -1,5 +1,4 @@
 <?php
-// /libreria_lapicito/admin/productos/editar.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
@@ -20,7 +19,6 @@ function toFloat($s){
 
 $id = max(1, (int)($_GET['id'] ?? 0));
 
-/* Cargar producto */
 $st = $conexion->prepare("SELECT * FROM producto WHERE id_producto=? LIMIT 1");
 $st->bind_param('i', $id);
 $st->execute();
@@ -28,14 +26,12 @@ $prod = $st->get_result()->fetch_assoc();
 $st->close();
 if (!$prod){ http_response_code(404); echo "Producto no encontrado"; exit; }
 
-/* Listas */
 $subcats=[]; $proveedores=[];
 $res = $conexion->query("SELECT id_subcategoria, nombre FROM subcategoria ORDER BY nombre");
 while($r=$res->fetch_assoc()) $subcats[]=$r;
 $res = $conexion->query("SELECT id_proveedor, nombre FROM proveedor ORDER BY nombre");
 while($r=$res->fetch_assoc()) $proveedores[]=$r;
 
-/* Valores del form (pre-cargados) */
 $errores=[]; $ok=false;
 
 $codigo  = $_POST ? trim($_POST['codigo'] ?? '') : $prod['codigo'];
@@ -59,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
   if ($pv<0) $errores[]='Precio de venta inválido.';
   if ($pc>0 && $pv>0 && $pc>$pv) $errores[]='El precio de venta debe ser ≥ compra.';
 
-  // Código único (excluyendo el propio)
   $st = $conexion->prepare("SELECT 1 FROM producto WHERE codigo=? AND id_producto<>? LIMIT 1");
   $st->bind_param('si', $codigo, $id);
   $st->execute();
@@ -73,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
           precio_compra=?, precio_venta=?, activo=?, actualizado_en=NOW()
       WHERE id_producto=?
     ");
-    // tipos: s s i i s d d i i
     $st->bind_param('ssiisddii',
       $codigo, $nombre, $id_subcategoria, $id_proveedor, $ubicacion,
       $pc, $pv, $activo, $id
@@ -81,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
     $st->execute(); $st->close();
     $ok = true;
 
-    // Refrescar datos
     $st = $conexion->prepare("SELECT * FROM producto WHERE id_producto=?");
     $st->bind_param('i',$id); $st->execute();
     $prod = $st->get_result()->fetch_assoc(); $st->close();

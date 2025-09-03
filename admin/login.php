@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </form>
         </div>
 
-        <!-- Columna derecha: ilustración -->
+       
         <div class="five columns texto-derecha">
           <img class="ilustracion" src="../img/libro.png" alt="Libros y lápiz">
         </div>

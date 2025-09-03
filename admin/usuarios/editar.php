@@ -20,13 +20,12 @@ if($id<=0){ header('Location: /libreria_lapicito/admin/usuarios/'); exit; }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-// Catálogos
+
 $roles=[]; $r=$conexion->query("SELECT id_rol, nombre_rol FROM rol ORDER BY nombre_rol");
 while($row=$r->fetch_assoc()) $roles[]=$row;
 $estados=[]; $r=$conexion->query("SELECT id_estado_usuario, nombre_estado FROM estado_usuario ORDER BY nombre_estado");
 while($row=$r->fetch_assoc()) $estados[]=$row;
 
-// Cargar usuario
 $st=$conexion->prepare("SELECT id_usuario, nombre, email, id_rol, id_estado_usuario FROM usuario WHERE id_usuario=?");
 $st->bind_param('i',$id); $st->execute();
 $u=$st->get_result()->fetch_assoc(); $st->close();
@@ -49,7 +48,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   if($pass!=='' && strlen($pass)<6) $errors[]='La nueva contraseña debe tener al menos 6 caracteres.';
   if($pass!==$pass2) $errors[]='Las contraseñas no coinciden.';
 
-  // Email único
+  
   if(!$errors){
     $st=$conexion->prepare("SELECT 1 FROM usuario WHERE email=? AND id_usuario<>? LIMIT 1");
     $st->bind_param('si',$email,$id);
@@ -67,7 +66,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 
       if($pass!==''){
         $hash=password_hash($pass,PASSWORD_DEFAULT);
-        // >>> columna correcta:
+       
         $st=$conexion->prepare("UPDATE usuario SET contrasena=? WHERE id_usuario=?");
         $st->bind_param('si',$hash,$id);
         $st->execute(); $st->close();

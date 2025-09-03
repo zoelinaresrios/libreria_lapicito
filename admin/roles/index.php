@@ -1,5 +1,4 @@
 <?php
-// /libreria_lapicito/admin/roles/index.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/acl.php';
@@ -8,24 +7,20 @@ if (function_exists('is_logged') && !is_logged()) {
   header('Location: /libreria_lapicito/admin/login.php'); exit;
 }
 
-/* Solo Admin (o quien tenga gestión total de usuarios) */
 require_perm('usuarios.gestionar');
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-/* Roles desde DB */
 $roles = [];
 $res = $conexion->query("SELECT id_rol, nombre_rol FROM rol ORDER BY id_rol ASC");
 while ($r = $res->fetch_assoc()) $roles[] = $r;
 
-/* Cantidad de usuarios por rol */
 $roleCounts = [];
 $res = $conexion->query("SELECT id_rol, COUNT(*) AS cant FROM usuario GROUP BY id_rol");
 while ($r = $res->fetch_assoc()) $roleCounts[(int)$r['id_rol']] = (int)$r['cant'];
 
-/* Etiquetas amigables para cada permiso */
 $PERM_LABELS = [
   'ventas.rapidas'            => 'Ventas rápidas',
   'inventario.ver'            => 'Ver inventario',
@@ -57,7 +52,6 @@ $PERM_LABELS = [
   'auditoria.ver'             => 'Ver auditoría',
 ];
 
-/* Helper para mostrar una etiqueta bonita aunque no esté en el mapa */
 function perm_label(string $k, array $labels): string {
   if (isset($labels[$k])) return $labels[$k];
   return ucwords(str_replace('.', ' → ', str_replace('_',' ', $k)));

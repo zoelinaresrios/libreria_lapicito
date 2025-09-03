@@ -20,7 +20,7 @@ $errors = [];
 $nombre = trim($_POST['nombre'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
-  // CSRF
+  
   if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) {
     $errors[] = 'Token inválido.';
   }
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   if (mb_strlen($nombre) < 3)     $errors[] = 'El nombre debe tener al menos 3 caracteres.';
   if (mb_strlen($nombre) > 120)   $errors[] = 'Máximo 120 caracteres.';
 
-  // Unicidad
+  
   if (!$errors) {
     $st = $conexion->prepare("SELECT 1 FROM categoria WHERE nombre = ? LIMIT 1");
     $st->bind_param('s', $nombre);

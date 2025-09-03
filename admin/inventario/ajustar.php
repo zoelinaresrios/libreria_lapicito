@@ -19,7 +19,6 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $idp = (int)($_GET['id'] ?? ($_POST['id_producto'] ?? 0));
 if($idp<=0){ header('Location: /libreria_lapicito/admin/inventario/'); exit; }
 
-// Traer producto + inventario
 $st=$conexion->prepare("
   SELECT p.id_producto, p.nombre,
          COALESCE(i.stock_actual,0) AS stock_actual,
@@ -72,10 +71,9 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         $nm=(int)$newMin;
         $st=$conexion->prepare("UPDATE inventario SET stock_minimo=? WHERE id_producto=?");
         $st->bind_param('ii',$nm,$idp); $st->execute(); $st->close();
-        $item['stock_minimo']=$nm; // para el botón sugerido
+        $item['stock_minimo']=$nm; 
       }
 
-      // Registrar movimiento (tabla se crea si no existe)
       $conexion->query("
         CREATE TABLE IF NOT EXISTS inventario_mov (
           id_mov INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -106,7 +104,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 }
 
 $faltan = max(0, (int)$item['stock_minimo'] - (int)$item['stock_actual']);
-$sugerido = max(5, $faltan); // podés ajustar la heurística
+$sugerido = max(5, $faltan); //ajustar 
 ?>
 <!doctype html>
 <html lang="es">

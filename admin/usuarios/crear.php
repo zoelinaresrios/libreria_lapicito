@@ -17,7 +17,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES,'UTF-8'); }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-// Catálogos
 $roles=[]; $r=$conexion->query("SELECT id_rol, nombre_rol FROM rol ORDER BY nombre_rol");
 while($row=$r->fetch_assoc()) $roles[]=$row;
 $estados=[]; $r=$conexion->query("SELECT id_estado_usuario, nombre_estado FROM estado_usuario ORDER BY nombre_estado");
@@ -40,7 +39,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   if(strlen($pass)<6) $errors[]='La contraseña debe tener al menos 6 caracteres.';
   if($pass!==$pass2) $errors[]='Las contraseñas no coinciden.';
 
-  // email único
+  
   if(!$errors){
     $st=$conexion->prepare("SELECT 1 FROM usuario WHERE email=? LIMIT 1");
     $st->bind_param('s',$email);

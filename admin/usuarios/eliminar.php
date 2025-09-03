@@ -28,14 +28,11 @@ $st->bind_param('i',$id); $st->execute();
 $user=$st->get_result()->fetch_assoc(); $st->close();
 if(!$user){ header('Location: /libreria_lapicito/admin/usuarios/'); exit; }
 
-// Controles de integridad
-// 1) ¿Es el último admin?
 $st=$conexion->prepare("SELECT COUNT(*) AS c FROM usuario WHERE id_rol=?");
-$ADMIN_ROLE_ID = 1; // ajustá si tu ID de admin es otro
+$ADMIN_ROLE_ID = 1;
 $st->bind_param('i',$ADMIN_ROLE_ID); $st->execute();
 $admins=(int)$st->get_result()->fetch_assoc()['c']; $st->close();
 
-// 2) ¿Tiene actividad (ventas o auditoría)?
 $st=$conexion->prepare("SELECT COUNT(*) c FROM venta WHERE id_usuario=?");
 $st->bind_param('i',$id); $st->execute();
 $ventas=(int)$st->get_result()->fetch_assoc()['c']; $st->close();

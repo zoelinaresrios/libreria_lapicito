@@ -251,7 +251,7 @@ $alertas_tbl = q_all($conexion,"
         </div>
       <?php endif; ?>
 
-      <!-- KPIs -->
+ 
       <div class="row">
         <div class="three columns">
           <div class="prod-card">
@@ -283,7 +283,6 @@ $alertas_tbl = q_all($conexion,"
         </div>
       </div>
 
-      <!-- Filtros de rango -->
     <form method="get" class="prod-filters range">
   <span class="dr-label">Rango</span>
   <div class="dr-fields">
@@ -297,7 +296,7 @@ $alertas_tbl = q_all($conexion,"
 
 
       <div class="row">
-        <!-- Ventas por mes -->
+        
         <div class="six columns">
           <div class="prod-card">
             <div class="prod-head"><h5>Ventas por mes (últimos 12)</h5></div>
@@ -316,7 +315,7 @@ $alertas_tbl = q_all($conexion,"
           </div>
         </div>
 
-        <!-- Top productos -->
+       
         <div class="six columns">
           <div class="prod-card">
             <div class="prod-head"><h5>Top productos (<?= h($desde) ?> → <?= h($hasta) ?>)</h5></div>
@@ -341,7 +340,7 @@ $alertas_tbl = q_all($conexion,"
       </div>
 
       <div class="row">
-        <!-- Ventas recientes -->
+      
         <div class="six columns">
           <div class="prod-card">
             <div class="prod-head"><h5>Ventas recientes</h5></div>
@@ -364,7 +363,6 @@ $alertas_tbl = q_all($conexion,"
           </div>
         </div>
 
-        <!-- Stock por categoría -->
         <div class="six columns">
           <div class="prod-card">
             <div class="prod-head"><h5>Stock por categoría</h5></div>
@@ -385,7 +383,7 @@ $alertas_tbl = q_all($conexion,"
       </div>
 
       <div class="row">
-        <!-- Bajo stock -->
+    
         <div class="six columns">
           <div class="prod-card">
             <div class="prod-head"><h5>Alertas: bajo stock</h5></div>
@@ -409,8 +407,7 @@ $alertas_tbl = q_all($conexion,"
           </div>
         </div>
 
-        <!-- Pedidos pendientes -->
-        <div class="six columns">
+           <div class="six columns">
           <div class="prod-card">
             <div class="prod-head">
               <h5>Pedidos pendientes</h5>
@@ -439,7 +436,7 @@ $alertas_tbl = q_all($conexion,"
       </div>
 
       <div class="row">
-        <!-- Movimientos recientes -->
+       
         <div class="six columns">
           <div class="prod-card">
             <div class="prod-head"><h5>Movimientos de stock (recientes)</h5></div>
@@ -462,7 +459,6 @@ $alertas_tbl = q_all($conexion,"
           </div>
         </div>
 
-        <!-- Alertas  -->
         <div class="six columns">
           <div class="prod-card">
             <div class="prod-head"><h5>Alertas (tabla)</h5></div>
