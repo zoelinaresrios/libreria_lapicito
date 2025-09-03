@@ -1,5 +1,4 @@
 <?php
-// /libreria_lapicito/admin/inventario/bajo.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
@@ -15,7 +14,6 @@ if (session_status()===PHP_SESSION_NONE) session_start();
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-// Filtro opcional por categoría
 $id_cat = (int)($_GET['cat'] ?? 0);
 $cats=[]; $rc=$conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
 while($row=$rc->fetch_assoc()) $cats[]=$row;

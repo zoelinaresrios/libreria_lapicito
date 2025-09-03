@@ -27,7 +27,6 @@ if (!$id || empty($_SESSION['csrf']) || !hash_equals($_SESSION['csrf'], $csrf)) 
 try {
   $conexion->begin_transaction();
 
-  // Intento de borrado físico
   $st=$conexion->prepare("DELETE FROM producto WHERE id_producto=? LIMIT 1");
   $st->bind_param('i',$id);
   $st->execute();
@@ -45,10 +44,8 @@ try {
   }
 
 } catch (mysqli_sql_exception $e) {
-  // 1451 => restricción FK: tiene referencias
   if ((int)$e->getCode()===1451) {
     try {
-      // Archivado (activo=0, y si existe 'archivado', lo setea en 1)
       $hasArchivado = false;
       $res = $conexion->query("SHOW COLUMNS FROM producto LIKE 'archivado'");
       if ($res && $res->num_rows > 0) $hasArchivado = true;

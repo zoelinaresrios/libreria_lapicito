@@ -1,5 +1,4 @@
 <?php
-// /libreria_lapicito/admin/inventario/index.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
@@ -20,18 +19,18 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 // Filtros
 $q       = trim($_GET['q'] ?? '');
 $id_cat  = (int)($_GET['cat'] ?? 0);
-$stock_f = $_GET['stock'] ?? ''; // '', 'bajo', 'sin'
+$stock_f = $_GET['stock'] ?? ''; //  bajo, sin
 
 $page    = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 15;
 $offset  = ($page - 1) * $perPage;
 
-// Catálogo de categorías
+
 $cats = [];
 $rC = $conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
 while ($row = $rC->fetch_assoc()) $cats[] = $row;
 
-// Base FROM
+
 $baseFrom = "
   FROM producto p
   LEFT JOIN subcategoria sc ON sc.id_subcategoria = p.id_subcategoria
@@ -39,19 +38,19 @@ $baseFrom = "
   LEFT JOIN inventario i    ON i.id_producto      = p.id_producto
 ";
 
-// WHERE dinámico
+
 $where = []; $params = []; $types = '';
 if ($q!=='')      { $where[]="(p.nombre LIKE ? OR p.id_producto=?)"; $params[]="%$q%"; $params[]=(int)$q; $types.='si'; }
 if ($id_cat>0)    { $where[]="c.id_categoria=?"; $params[]=$id_cat; $types.='i'; }
 $whereSql = $where ? ('WHERE '.implode(' AND ', $where)) : '';
 
-// HAVING por estado de stock
+
 $having = [];
 if ($stock_f==='bajo') $having[] = "COALESCE(i.stock_actual,0) <= COALESCE(i.stock_minimo,0)";
 if ($stock_f==='sin')  $having[] = "COALESCE(i.stock_actual,0) = 0";
 $havingSql = $having ? ('HAVING '.implode(' AND ', $having)) : '';
 
-// Conteo para paginar
+
 $sqlCount = "
   SELECT COUNT(*) AS total
   FROM (
@@ -109,21 +108,42 @@ $st->close();
   <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-        <?php if (can('ventas.rapidas')): ?><li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li><?php endif; ?>
+        <li><a  href="/libreria_lapicito/admin/index.php">inicio</a></li>
+       
+        <?php if (can('productos.ver')): ?>
         <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
-        <li><a href="/libreria_lapicito/admin/categorias/">Categorías</a></li>
+        <?php endif; ?>
+        <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
+        <?php if (can('inventario.ver')): ?>
+           <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
         <li><a class="active" href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
-        <?php if (can('pedidos.aprobar')): ?><li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li><?php endif; ?>
-        <?php if (can('alertas.ver')): ?><li><a href="/libreria_lapicito/admin/alertas/">Alertas</a></li><?php endif; ?>
-        <?php if (can('reportes.detallados') || can('reportes.simple')): ?><li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li><?php endif; ?>
+        <?php endif; ?>
+        <?php if (can('pedidos.aprobar')): ?>
+        <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
+        <?php endif; ?>
+        <?php if (can('alertas.ver')): ?>
+        <li><a href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
+        <?php endif; ?>
+        <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
+        <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
+        <?php endif; ?>
+         <?php if (can('ventas.rapidas')): ?>
+        <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
         <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
-        <?php if (can('usuarios.gestionar')): ?><li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li><?php endif; ?>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar')): ?>
+        <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
+        <?php endif; ?>
         <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
         <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
 
+    
+    <main class="prod-main">
+     
     <main class="prod-main">
       <div class="inv-title">Panel administrativo — Inventario</div>
 
@@ -139,13 +159,13 @@ $st->close();
           <h5>Inventario</h5>
           <div class="btns-right">
             <a class="btn-sm" href="/libreria_lapicito/admin/inventario/bajo.php">Bajo stock</a>
-            <a class="btn-sm" href="/libreria_lapicito/admin/inventario/minimos.php">Mínimos (lote)</a>
-            <a class="btn-sm" href="/libreria_lapicito/admin/inventario/exportar_csv.php">Exportar CSV</a>
-            <a class="btn-sm" href="/libreria_lapicito/admin/inventario/importar_csv.php">Importar CSV</a>
+            <a class="btn-sm" href="/libreria_lapicito/admin/inventario/minimos.php">Mínimos </a>
+            <a class="btn-sm" href="/libreria_lapicito/admin/inventario/exportar_csv.php">Exportar </a>
+            <a class="btn-sm" href="/libreria_lapicito/admin/inventario/importar_csv.php">Importar</a>
           </div>
         </div>
 
-        <!-- Filtros -->
+
         <form class="prod-filters" method="get">
           <input class="input-search" type="text" name="q" value="<?= h($q) ?>" placeholder="Buscar por nombre o ID…">
           <select name="cat">
@@ -164,7 +184,7 @@ $st->close();
           <button class="btn-filter" type="submit">Filtrar</button>
         </form>
 
-        <!-- Tabla -->
+
         <div class="table-wrap">
           <table class="u-full-width">
             <thead>
@@ -208,7 +228,7 @@ $st->close();
           </table>
         </div>
 
-        <!-- Paginación -->
+     
         <?php if ($pages>1): ?>
           <div class="prod-pager">
             <?php for($p=1;$p<=$pages;$p++):

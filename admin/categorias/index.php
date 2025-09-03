@@ -1,10 +1,8 @@
 <?php
-// /libreria_lapicito/admin/categorias/index.php
 
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
-// ACL opcional (como en tu archivo de productos)
 $HAS_ACL = file_exists(__DIR__ . '/../includes/acl.php');
 if ($HAS_ACL) {
   require_once __DIR__ . '/../includes/acl.php';
@@ -29,7 +27,6 @@ $offset   = ($page - 1) * $perPage;
 
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-// Base FROM con agregaciones para contar subcategorías, productos y stock total
 $baseFrom = "
   FROM categoria c
   LEFT JOIN subcategoria sc          ON sc.id_categoria   = c.id_categoria
@@ -37,18 +34,17 @@ $baseFrom = "
   LEFT JOIN inventario i             ON i.id_producto     = p.id_producto
 ";
 
-// WHERE por búsqueda
 $where = []; $params = []; $types = '';
 if ($q !== '') { $where[] = "c.nombre LIKE ?"; $params[] = "%$q%"; $types .= 's'; }
 $whereSql = $where ? ('WHERE '.implode(' AND ', $where)) : '';
 
-// HAVING por existencia de productos
+
 $having = [];
 if ($has_prod === 'con') { $having[] = "COUNT(DISTINCT p.id_producto) > 0"; }
 if ($has_prod === 'sin') { $having[] = "COUNT(DISTINCT p.id_producto) = 0"; }
 $havingSql = $having ? ('HAVING '.implode(' AND ', $having)) : '';
 
-// Conteo total para paginar
+
 $sqlCount = "
   SELECT COUNT(*) AS total
   FROM (
@@ -104,15 +100,16 @@ $st->close();
   <div class="barra"></div>
 
   <div class="prod-shell">
-    
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-        
+        <li><a  href="/libreria_lapicito/admin/index.php">inicio</a></li>
+       
+        <?php if (can('productos.ver')): ?>
         <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
-        <li><a class="active" href="/libreria_lapicito/admin/categorias/">Categorías</a></li>
+        <?php endif; ?>
+        <li><a class="active" href="/libreria_lapicito/admin/categorias/">categorias</a></li>
         <?php if (can('inventario.ver')): ?>
-          
+           <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
         <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
         <?php endif; ?>
         <?php if (can('pedidos.aprobar')): ?>
@@ -124,7 +121,7 @@ $st->close();
         <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
         <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
         <?php endif; ?>
-        <?php if (can('ventas.rapidas')): ?>
+         <?php if (can('ventas.rapidas')): ?>
         <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
@@ -138,6 +135,8 @@ $st->close();
       </ul>
     </aside>
 
+    
+
     <main class="prod-main">
       <div class="inv-title">Panel administrativo — Categorías</div>
 
@@ -149,7 +148,7 @@ $st->close();
           <?php endif; ?>
         </div>
 
-        <!-- Filtros -->
+        
         <form class="prod-filters" method="get">
           <input class="input-search" type="text" name="q" value="<?= h($q) ?>" placeholder="Buscar categoría…">
           <select name="has" title="Filtrar por productos">
@@ -160,7 +159,7 @@ $st->close();
           <button class="btn-filter" type="submit">Filtrar</button>
         </form>
 
-        <!-- Tabla -->
+        
         <div class="table-wrap">
           <table class="u-full-width">
             <thead>
@@ -202,7 +201,6 @@ $st->close();
           </table>
         </div>
 
-        <!-- Paginación -->
         <?php if ($pages > 1): ?>
           <div class="prod-pager">
             <?php for($p=1;$p<=$pages;$p++):

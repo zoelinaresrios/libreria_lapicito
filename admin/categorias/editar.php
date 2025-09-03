@@ -19,7 +19,7 @@ if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(16)); }
 $id = (int)($_GET['id'] ?? 0);
 if ($id<=0) { header('Location: /libreria_lapicito/admin/categorias/'); exit; }
 
-// Cargar actual
+
 $st = $conexion->prepare("SELECT id_categoria, nombre FROM categoria WHERE id_categoria=?");
 $st->bind_param('i', $id);
 $st->execute();
@@ -39,7 +39,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   if (mb_strlen($nombre) > 120)   $errors[] = 'Máximo 120 caracteres.';
 
   if (!$errors) {
-    // Unicidad excluyendo la misma categoría
     $st = $conexion->prepare("SELECT 1 FROM categoria WHERE nombre=? AND id_categoria<>? LIMIT 1");
     $st->bind_param('si', $nombre, $id);
     $st->execute();

@@ -19,7 +19,7 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 $idCatDefault = (int)($_GET['cat'] ?? 0);
 
-// Catálogo categorías
+// Catálogo 
 $cats=[]; $r=$conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
 while($row=$r->fetch_assoc()) $cats[]=$row;
 
@@ -34,7 +34,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   if(mb_strlen($nombre)<3) $errors[]='Mínimo 3 caracteres.';
   if(mb_strlen($nombre)>120) $errors[]='Máximo 120 caracteres.';
 
-  // Unicidad por categoría
+  
   if(!$errors){
     $st=$conexion->prepare("SELECT 1 FROM subcategoria WHERE id_categoria=? AND nombre=? LIMIT 1");
     $st->bind_param('is',$idCat,$nombre);

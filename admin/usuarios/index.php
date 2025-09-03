@@ -1,5 +1,4 @@
 <?php
-// /libreria_lapicito/admin/usuarios/index.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
@@ -35,14 +34,12 @@ $estados = [];
 $r = $conexion->query("SELECT id_estado_usuario, nombre_estado FROM estado_usuario ORDER BY nombre_estado");
 while ($row=$r->fetch_assoc()) $estados[]=$row;
 
-// WHERE dinámico
 $w=[]; $params=[]; $types='';
 if ($q!==''){ $w[]="(u.nombre LIKE ? OR u.email LIKE ?)"; $params[]="%$q%"; $params[]="%$q%"; $types.='ss'; }
 if ($idRol>0){ $w[]="u.id_rol=?"; $params[]=$idRol; $types.='i'; }
 if ($idEst>0){ $w[]="u.id_estado_usuario=?"; $params[]=$idEst; $types.='i'; }
 $whereSql = $w ? ('WHERE '.implode(' AND ', $w)) : '';
 
-// Totales para paginación
 $sqlCount = "
   SELECT COUNT(*) AS total
   FROM usuario u
@@ -55,7 +52,7 @@ $total = (int)($st->get_result()->fetch_assoc()['total'] ?? 0);
 $st->close();
 $pages = max(1, (int)ceil($total/$perPage));
 
-// Listado
+
 $sqlList = "
   SELECT u.id_usuario, u.nombre, u.email, u.creado_en, u.actualizado_en,
          r.nombre_rol, e.nombre_estado
@@ -90,21 +87,40 @@ $st->close();
   <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-        <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
+        <li><a  href="/libreria_lapicito/admin/index.php">inicio</a></li>
+       
+        <?php if (can('productos.ver')): ?>
         <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
-        <li><a href="/libreria_lapicito/admin/categorias/">Categorías</a></li>
+        <?php endif; ?>
+        <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
+        <?php if (can('inventario.ver')): ?>
+           <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
         <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
+        <?php endif; ?>
+        <?php if (can('pedidos.aprobar')): ?>
         <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
+        <?php endif; ?>
+        <?php if (can('alertas.ver')): ?>
         <li><a href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
+        <?php endif; ?>
+        <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
         <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
+        <?php endif; ?>
+         <?php if (can('ventas.rapidas')): ?>
+        <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
         <li><a class="active" href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar')): ?>
         <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
+        <?php endif; ?>
         <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
         <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
 
+    
     <main class="prod-main">
       <div class="inv-title">Panel administrativo — Usuarios</div>
 
