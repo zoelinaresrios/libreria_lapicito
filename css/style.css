@@ -13,7 +13,7 @@
   --f3:clamp(14px,1.5vw,16px);
 }
 
-/* ===== Base ===== */
+/* Base */
 html,body{margin:0;padding:0}
 body{
   background:var(--fondo);
@@ -26,7 +26,7 @@ body{
    Acomodo márgenes para nuestra portada */
 h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
 
-/* ===== Barra superior ===== */
+/*  Barra superior  */
 .barra{
   height:48px;
   background:var(--barra);
@@ -46,7 +46,7 @@ h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
 }
 @keyframes barra-brillo{to{transform:translateX(100%)}}
 
-/* ===== Lienzo / layout general ===== */
+/*  Lienzo / layout general  */
 .lienzo{
   min-height:calc(100dvh - 48px);
   display:flex;
@@ -58,7 +58,7 @@ h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
    Ajustes suaves para espacios laterales */
 .container{padding-left:16px;padding-right:16px}
 
-/* ===== Columna izquierda (texto) ===== */
+/* Columna izquierda (texto) */
 .titulo{
   font-weight:600;
   font-size:var(--f1);
@@ -84,7 +84,7 @@ h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
   
 }
 
-/* ===== Botón ===== */
+/*  Botón  */
 .btn{
   font-family: Arial, Helvetica, sans-serif;
   display:inline-block;
@@ -102,10 +102,10 @@ h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
 .btn:hover{filter:brightness(1.06)}
 .btn:active{transform:translateY(1px)}
 
-/* Si usás <button> */
+
 button.btn{appearance:none;border:0}
 
-/* ===== Columna derecha (ilustración) ===== */
+/*  Columna derecha (ilustración)  */
 .ilustracion{
   width: 410px; max-width:100%; height:auto;
   display:inline-block;
@@ -116,7 +116,7 @@ button.btn{appearance:none;border:0}
   .ilustracion:hover{transform:translateY(-3px) rotate(-0.3deg)}
 }
 
-/* ===== Utilidades ===== */
+/*  Utilidades  */
 .separar{margin-top:22px}
 .texto-derecha{text-align:right}
 
@@ -129,7 +129,7 @@ button.btn{appearance:none;border:0}
 }
 
 
-/* === Ajustes finos para que calce con el mockup === */
+/*  Ajustes finos para que calce con el mockup  */
 
 /* Franja: sombra sutil (no color plano) */
 .barra{ box-shadow:0 2px 0 rgba(0,0,0,.04); }
@@ -173,7 +173,7 @@ button.btn{appearance:none;border:0}
   background:#fff; border:1px solid #e7b1b1; color:#8a1f1f;
   border-radius:10px; padding:10px 12px; margin-bottom:10px; max-width:520px;
 }
-/* ======= Productos (admin/productos) ======= */
+/*  Productos (admin/productos)  */
 .inv-title{
   text-align:center;
   color:#6f665c;
@@ -251,7 +251,7 @@ table.u-full-width thead th{ background:#fff3d9; }
 .prod-pager{ text-align:center; margin-top:10px; }
 .prod-pager a{ display:inline-block; padding:4px 8px; border-radius:8px; margin:0 2px; color:#6f665c; text-decoration:none; }
 .prod-pager a.on{ background:#fffef9; border:1px solid #e9d7b5; }
-/* --- Lupa del buscador: pequeña y a la derecha --- */
+/* Lupa del buscador: pequeña y a la derecha */
 .prod-search{ position:relative; width:100%; }
 
 .prod-search .icon-search{
@@ -277,7 +277,7 @@ table.u-full-width thead th{ background:#fff3d9; }
   outline:0; border-color:#d8c8a9;
   box-shadow:0 0 0 3px rgba(225,163,87,.18);
 }
-/* ====== Crear Producto ====== */
+/* Crear Producto */
 .form-grid{
   display:grid;
   grid-template-columns: 1fr 1fr;
@@ -312,7 +312,7 @@ table.u-full-width thead th{ background:#fff3d9; }
   color:var(--texto)!important;
   border:1px solid var(--borde);
 }
-/* ====== Dashboard: layout y respiración ====== */
+/* Dashboard: layout y respiración */
 
 /* Contenedor principal más ancho y con padding cómodo */
 .prod-main{
@@ -457,7 +457,7 @@ table.u-full-width thead th{ background:#fff3d9; }
   .prod-side{ position:static; }
   .grid-2, .grid-3{ grid-template-columns: 1fr; }
 }
-/* ===== Rango de fechas (chip compacto) ===== */
+/* Rango de fechas (chip compacto) */
 .prod-filters.range{
   gap: 12px;
   align-items: center;
@@ -490,7 +490,7 @@ table.u-full-width thead th{ background:#fff3d9; }
   border-radius: 8px;
   font: inherit;
   color: var(--texto);
-  min-width: 140px;   /* ajustá si querés más corto/largo */
+  min-width: 140px;  
 }
 
 .dr-fields input[type="date"]:focus{
