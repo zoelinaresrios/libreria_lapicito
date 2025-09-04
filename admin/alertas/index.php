@@ -5,27 +5,30 @@ require_once __DIR__ . '/../../includes/auth.php';
 $HAS_ACL = file_exists(__DIR__ . '/../includes/acl.php');
 if ($HAS_ACL) { require_once __DIR__ . '/../includes/acl.php'; }
 else {
+    // Si no existe ACL, asegura la sesión permiten todo 
   if (session_status()===PHP_SESSION_NONE) session_start();
   if (!function_exists('can')) { function can($k){ return true; } }
   if (!function_exists('require_perm')) { function require_perm($k){ return true; } }
 }
-require_perm('alertas.ver');
+require_perm('alertas.ver');// Exige el permiso para ver el módulo de alertas
 
-if (session_status()===PHP_SESSION_NONE) session_start();
-if (empty($_SESSION['csrf'])) $_SESSION['csrf']=bin2hex(random_bytes(16));
+if (session_status()===PHP_SESSION_NONE) session_start();// revisa que haya sesion activada
+
+if (empty($_SESSION['csrf'])) $_SESSION['csrf']=bin2hex(random_bytes(16));//Genera token CSRF si no existe (proteccion)
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES,'UTF-8'); }
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);// Configura mysqli para no tener errores
 
-$errors=[];
+
+$errors=[];// Acumulador de errores
 if ($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['accion'] ?? '')==='atender') {
-  if (!can('alertas.atender')) $errors[]='No tenés permiso.';
-  if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) $errors[]='Token inválido.';
+  if (!can('alertas.atender')) $errors[]='No tenés permiso.'; // Verifica permiso
+  if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) $errors[]='Token inválido.';  // Verificación CSRF (previene ataques)
 
   $id_alerta=(int)($_POST['id_alerta'] ?? 0);
   $id_usuario=(int)($_SESSION['id_usuario'] ?? 0);
 
   if ($id_alerta<=0) $errors[]='ID inválido.';
-  if (!$errors) {
+  if (!$errors) {  // Si no hay errores, ejecuta
     $st=$conexion->prepare("UPDATE alerta SET atendida=1, atendida_por=?, fecha_atendida=NOW() WHERE id_alerta=?");
     $st->bind_param('ii',$id_usuario,$id_alerta);
     $st->execute(); $st->close();
@@ -33,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['accion'] ?? '')==='atender')
     header('Location: '.$_SERVER['REQUEST_URI']); exit;
   }
 }
-
+// filtros
 $q      = trim($_GET['q'] ?? '');
 $tipo   = (int)($_GET['tipo'] ?? 0);       
 $estado = $_GET['estado'] ?? '';          
@@ -42,15 +45,16 @@ $page    = max(1,(int)($_GET['page'] ?? 1));
 $perPage = 20;
 $offset  = ($page-1)*$perPage;
 
-$tipos=[]; 
+$tipos=[]; // Carga de tipos 
 $r=$conexion->query("SELECT id_tipo_alerta,nombre_tipo FROM tipo_alerta ORDER BY nombre_tipo");
 while($row=$r->fetch_assoc()) $tipos[]=$row;
 
 $where=[]; $params=[]; $types='';
-if ($q!==''){
+if ($q!==''){ // Filtro por texto 
   $where[]="(a.producto_nombre LIKE ? OR a.producto_codigo LIKE ?)";
   $params[]="%$q%"; $params[]="%$q%"; $types.='ss';
-}
+
+} // Filtro por estado
 if ($tipo>0){ $where[]="a.id_tipo_alerta=?"; $params[]=$tipo; $types.='i'; }
 if ($estado==='pend'){ $where[]="a.atendida=0"; }
 if ($estado==='atend'){ $where[]="a.atendida=1"; }
@@ -63,7 +67,7 @@ if ($types) $st->bind_param($types,...$params);
 $st->execute();
 $total=(int)($st->get_result()->fetch_assoc()['total']??0);
 $st->close();
-$pages=max(1,(int)ceil($total/$perPage));
+$pages=max(1,(int)ceil($total/$perPage));// Cálculo de páginas
 
 $sql="
   SELECT a.*, ta.nombre_tipo, u.nombre AS atendido_por
