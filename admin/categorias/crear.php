@@ -1,16 +1,16 @@
 <?php
 include(__DIR__ . '/../../includes/db.php');
-require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/auth.php';// Autenticación general (login)
 
 $HAS_ACL = file_exists(__DIR__ . '/../includes/acl.php');
 if ($HAS_ACL) { require_once __DIR__ . '/../includes/acl.php'; }
 else {
-  if (session_status()===PHP_SESSION_NONE) session_start();
+  if (session_status()===PHP_SESSION_NONE) session_start();//revisAa si hay sesion activa
   if (!function_exists('can')) { function can($k){ return true; } }
   if (!function_exists('require_perm')) { function require_perm($k){ return true; } }
 }
 
-require_perm('categorias.crear');
+require_perm('categorias.crear');// si no tiene retriccion de permisos da todos
 
 if (session_status()===PHP_SESSION_NONE) session_start();
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }

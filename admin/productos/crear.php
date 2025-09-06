@@ -214,10 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <?php endforeach; ?>
             </select>
 
-            <label for="ubicacion">Ubicación</label>
-            <input id="ubicacion" type="text" name="ubicacion" value="<?= h($ubicacion) ?>" placeholder="Ej: A1-03">
-          </div>
-
+          
           <div>
             <div class="row">
               <div class="six columns">
