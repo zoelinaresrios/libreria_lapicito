@@ -19,6 +19,7 @@ if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(16)); }
 $id = (int)($_GET['id'] ?? ($_POST['id'] ?? 0));
 if ($id<=0) { header('Location: /libreria_lapicito/admin/categorias/'); exit; }
 
+
 $sql = "
   SELECT
     c.id_categoria, c.nombre,
