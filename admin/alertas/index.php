@@ -15,10 +15,10 @@ if (session_status()===PHP_SESSION_NONE) session_start();
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES,'UTF-8'); }
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-// Filtros
+// filtros
 $q        = trim($_GET['q'] ?? '');
 $idTipo   = (int)($_GET['tipo'] ?? 0);
-$estado   = trim($_GET['estado'] ?? ''); // '', pendiente, resuelta
+$estado   = trim($_GET['estado'] ?? '');
 $desde    = trim($_GET['desde'] ?? '');
 $hasta    = trim($_GET['hasta'] ?? '');
 
@@ -26,23 +26,25 @@ $page     = max(1,(int)($_GET['page']??1));
 $perPage  = 15; 
 $offset   = ($page-1)*$perPage;
 
-// catálogo de tipos
+// tipos
 $tipos=[]; 
 $r=$conexion->query("SELECT id_tipo_alerta, nombre FROM tipo_alerta ORDER BY nombre");
 while($row=$r->fetch_assoc()) $tipos[]=$row;
 
-// WHERE dinámico
+// where dinámico
 $w=[]; $params=[]; $types='';
-if ($q!==''){ $w[]="(a.descripcion LIKE ? OR ta.nombre LIKE ? OR u.usuario LIKE ? OR p.nombre LIKE ? OR CAST(a.id_pedido AS CHAR) LIKE ?)"; 
-              $params[]="%$q%"; $params[]="%$q%"; $params[]="%$q%"; $params[]="%$q%"; $params[]="%$q%"; 
-              $types.='sssss'; }
+if ($q!==''){
+  $w[]="(a.descripcion LIKE ? OR ta.nombre LIKE ? OR u.usuario LIKE ? OR p.nombre LIKE ? OR CAST(a.id_pedido AS CHAR) LIKE ?)";
+  $params=array_merge($params,["%$q%","%$q%","%$q%","%$q%","%$q%"]);
+  $types.='sssss';
+}
 if ($idTipo>0){ $w[]="a.id_tipo_alerta=?"; $params[]=$idTipo; $types.='i'; }
 if ($estado==='pendiente' || $estado==='resuelta'){ $w[]="a.estado=?"; $params[]=$estado; $types.='s'; }
 if ($desde!==''){ $w[]="DATE(a.created_at) >= ?"; $params[]=$desde; $types.='s'; }
 if ($hasta!==''){ $w[]="DATE(a.created_at) <= ?"; $params[]=$hasta; $types.='s'; }
 $whereSql = $w?('WHERE '.implode(' AND ',$w)):'';
 
-// Total
+// total
 $sqlCount="
   SELECT COUNT(*) total
   FROM alerta a
@@ -58,14 +60,10 @@ $total=(int)($st->get_result()->fetch_assoc()['total']??0);
 $st->close();
 $pages=max(1,(int)ceil($total/$perPage));
 
-// Lista
+// lista
 $sqlList="
   SELECT
-    a.id_alerta,
-    a.descripcion,
-    a.estado,
-    a.id_pedido,
-    a.created_at,
+    a.id_alerta, a.descripcion, a.estado, a.id_pedido, a.created_at,
     ta.nombre AS tipo_nombre,
     COALESCE(u.usuario,'—') AS usuario,
     COALESCE(p.nombre,'—') AS producto
@@ -79,161 +77,176 @@ $sqlList="
 ";
 $typesList=$types.'ii';
 $paramsList=$params; $paramsList[]=$perPage; $paramsList[]=$offset;
-
 $st=$conexion->prepare($sqlList);
 $st->bind_param($typesList, ...$paramsList);
 $st->execute();
 $rows=$st->get_result()->fetch_all(MYSQLI_ASSOC);
 $st->close();
 ?>
-<!doctype html><html lang="es"><head>
-<meta charset="utf-8"><title>Alertas — Los Lapicitos</title>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Alertas — Los Lapicitos</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-<link rel="stylesheet" href="/libreria_lapicito/css/style.css">
-<style>
-/* Badges de estado, siguiendo tu paleta */
-.badge { display:inline-block; padding:.25rem .55rem; border-radius:999px; font-size:.8rem; line-height:1; }
-.badge-pendiente{ background:#fff4e5; color:#8a5200; border:1px solid #f4c07a; }
-.badge-resuelta{  background:#e9f7ef; color:#1e7b43; border:1px solid #b9e6ca; }
-.col-actions a { margin-right:.25rem; }
-</style>
-</head><body>
-<div class="barra"></div>
-<div class="prod-shell">
-  <aside class="prod-side">
-    <ul class="prod-nav">
-      <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-      <?php if (can('productos.ver')): ?>
-      <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
-      <?php endif; ?>
-      <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
-      <?php if (can('inventario.ver')): ?>
-      <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
-      <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
-      <?php endif; ?>
-      <?php if (can('pedidos.aprobar')): ?>
-      <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
-      <?php endif; ?>
-      <?php if (can('alertas.ver')): ?>
-      <li><a class="active" href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
-      <?php endif; ?>
-      <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
-      <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
-      <?php endif; ?>
-      <?php if (can('ventas.rapidas')): ?>
-      <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
-      <?php endif; ?>
-      <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
-      <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
-      <?php endif; ?>
-      <?php if (can('usuarios.gestionar')): ?>
-      <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
-      <?php endif; ?>
-      <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
-      <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
-    </ul>
-  </aside>
 
-  <main class="prod-main">
-    <div class="inv-title">Panel administrativo — Alertas</div>
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/admin.css" rel="stylesheet">
+</head>
+<body>
 
-    <?php if(!empty($_SESSION['flash_ok'])): ?>
-      <div class="alert-ok"><?= h($_SESSION['flash_ok']); unset($_SESSION['flash_ok']); ?></div>
-    <?php endif; ?>
-    <?php if(!empty($_SESSION['flash_err'])): ?>
-      <div class="alert-error"><?= h($_SESSION['flash_err']); unset($_SESSION['flash_err']); ?></div>
-    <?php endif; ?>
-
-    <div class="prod-card">
-      <div class="prod-head">
-        <h5>Alertas</h5>
-        <?php if (can('alertas.crear_manual')): ?>
-          <a class="btn-add" href="/libreria_lapicito/admin/alertas/crear.php">+ Crear alerta</a>
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <aside class="col-12 col-md-3 col-lg-2 p-3 bg-light sidebar">
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" href="//admin/index.php">Inicio</a></li>
+        <?php if (can('productos.ver')): ?>
+        <li class="nav-item"><a class="nav-link" href="/admin/productos/">Productos</a></li>
         <?php endif; ?>
-      </div>
+        <li class="nav-item"><a class="nav-link" href="/admin/categorias/">Categorías</a></li>
+        <?php if (can('inventario.ver')): ?>
+        <li class="nav-item"><a class="nav-link" href="/admin/subcategorias/">Subcategorías</a></li>
+        <li class="nav-item"><a class="nav-link" href="/admin/inventario/">Inventario</a></li>
+        <?php endif; ?>
+        <?php if (can('pedidos.aprobar')): ?>
+        <li class="nav-item"><a class="nav-link" href="/admin/pedidos/">Pedidos</a></li>
+        <?php endif; ?>
+        <?php if (can('alertas.ver')): ?>
+        <li class="nav-item"><a class="nav-link active" href="/admin/alertas/">Alertas</a></li>
+        <?php endif; ?>
+        <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
+        <li class="nav-item"><a class="nav-link" href="/admin/reportes/">Reportes</a></li>
+        <?php endif; ?>
+        <?php if (can('ventas.rapidas')): ?>
+        <li class="nav-item"><a class="nav-link" href="/admin/ventas/">Ventas</a></li>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
+        <li class="nav-item"><a class="nav-link" href="/admin/usuarios/">Usuarios</a></li>
+        <?php endif; ?>
+        <?php if (can('usuarios.gestionar')): ?>
+        <li class="nav-item"><a class="nav-link" href="/admin/roles/">Roles y permisos</a></li>
+        <?php endif; ?>
+        <li class="nav-item"><a class="nav-link" href="/admin/ajustes/">Ajustes</a></li>
+        <li class="nav-item"><a class="nav-link text-danger" href="/admin/logout.php">Salir</a></li>
+      </ul>
+    </aside>
 
-      <form class="prod-filters" method="get">
-        <input class="input-search" type="text" name="q" value="<?= h($q) ?>" placeholder="Buscar por texto, usuario, producto o #pedido…">
-        <select name="tipo">
-          <option value="0">Todos los tipos</option>
-          <?php foreach($tipos as $t): ?>
-            <option value="<?= (int)$t['id_tipo_alerta'] ?>" <?= $idTipo===(int)$t['id_tipo_alerta']?'selected':'' ?>>
-              <?= h($t['nombre']) ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-        <select name="estado">
-          <option value="">Todos los estados</option>
-          <option value="pendiente" <?= $estado==='pendiente'?'selected':'' ?>>Pendiente</option>
-          <option value="resuelta"  <?= $estado==='resuelta'?'selected':''  ?>>Resuelta</option>
-        </select>
-        <input type="date" name="desde" value="<?= h($desde) ?>" title="Desde">
-        <input type="date" name="hasta" value="<?= h($hasta) ?>" title="Hasta">
-        <button class="btn-filter" type="submit">Filtrar</button>
-      </form>
+    <!-- Main -->
+    <main class="col-12 col-md-9 col-lg-10 p-4">
+      <h4 class="mb-3">Panel administrativo — Alertas</h4>
 
-      <div class="table-wrap">
-        <table class="u-full-width">
-          <thead>
-            <tr>
-              <th style="width:80px">ID</th>
-              <th style="width:180px">Tipo</th>
-              <th>Descripción</th>
-              <th style="width:120px">Estado</th>
-              <th style="width:150px">Usuario</th>
-              <th style="width:160px">Producto</th>
-              <th style="width:120px">Pedido</th>
-              <th style="width:150px">Creada</th>
-              <th style="width:170px">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach($rows as $r): ?>
-              <tr>
-                <td>#<?= (int)$r['id_alerta'] ?></td>
-                <td><?= h($r['tipo_nombre'] ?? '—') ?></td>
-                <td><?= h($r['descripcion'] ?? '—') ?></td>
-                <td>
-                  <?php if(($r['estado']??'')==='resuelta'): ?>
-                    <span class="badge badge-resuelta">Resuelta</span>
-                  <?php else: ?>
-                    <span class="badge badge-pendiente">Pendiente</span>
-                  <?php endif; ?>
-                </td>
-                <td><?= h($r['usuario'] ?? '—') ?></td>
-                <td><?= h($r['producto'] ?? '—') ?></td>
-                <td><?= $r['id_pedido']?('#'.(int)$r['id_pedido']):'—' ?></td>
-                <td><?= h(date('d/m/Y H:i', strtotime($r['created_at']))) ?></td>
-                <td class="col-actions">
-                  <a class="btn-sm" href="/libreria_lapicito/admin/alertas/ver.php?id=<?= (int)$r['id_alerta'] ?>">Ver</a>
-                  <?php if (can('alertas.resolver')): ?>
-                    <?php if(($r['estado']??'')!=='resuelta'): ?>
-                      <a class="btn-sm" href="/libreria_lapicito/admin/alertas/resolver.php?id=<?= (int)$r['id_alerta'] ?>">Resolver</a>
-                    <?php endif; ?>
-                  <?php endif; ?>
-                  <?php if (can('alertas.eliminar')): ?>
-                    <a class="btn-sm" href="/libreria_lapicito/admin/alertas/eliminar.php?id=<?= (int)$r['id_alerta'] ?>">eliminar</a>
-                  <?php endif; ?>
-                </td>
-              </tr>
-            <?php endforeach; ?>
-            <?php if(empty($rows)): ?>
-              <tr><td colspan="9" class="muted">Sin resultados.</td></tr>
-            <?php endif; ?>
-          </tbody>
-        </table>
-      </div>
-
-      <?php if($pages>1): ?>
-        <div class="prod-pager">
-          <?php for($p=1;$p<=$pages;$p++): $qs=$_GET; $qs['page']=$p; $href='?'.http_build_query($qs); ?>
-            <a class="<?= $p===$page?'on':'' ?>" href="<?= h($href) ?>"><?= $p ?></a>
-          <?php endfor; ?>
-        </div>
+      <?php if(!empty($_SESSION['flash_ok'])): ?>
+        <div class="alert alert-success"><?= h($_SESSION['flash_ok']); unset($_SESSION['flash_ok']); ?></div>
       <?php endif; ?>
-    </div>
-  </main>
+      <?php if(!empty($_SESSION['flash_err'])): ?>
+        <div class="alert alert-danger"><?= h($_SESSION['flash_err']); unset($_SESSION['flash_err']); ?></div>
+      <?php endif; ?>
+
+      <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Alertas</h5>
+          <?php if (can('alertas.crear_manual')): ?>
+            <a class="btn btn-sm btn-primary" href="/admin/alertas/crear.php">+ Crear alerta</a>
+          <?php endif; ?>
+        </div>
+        <div class="card-body">
+          <!-- filtros -->
+          <form class="row g-2 mb-3" method="get">
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="q" value="<?= h($q) ?>" placeholder="Buscar por texto, usuario, producto o #pedido…">
+            </div>
+            <div class="col-6 col-md-2">
+              <select class="form-select" name="tipo">
+                <option value="0">Todos los tipos</option>
+                <?php foreach($tipos as $t): ?>
+                  <option value="<?= (int)$t['id_tipo_alerta'] ?>" <?= $idTipo===(int)$t['id_tipo_alerta']?'selected':'' ?>>
+                    <?= h($t['nombre']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <select class="form-select" name="estado">
+                <option value="">Todos</option>
+                <option value="pendiente" <?= $estado==='pendiente'?'selected':'' ?>>Pendiente</option>
+                <option value="resuelta"  <?= $estado==='resuelta'?'selected':''  ?>>Resuelta</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <input class="form-control" type="date" name="desde" value="<?= h($desde) ?>">
+            </div>
+            <div class="col-6 col-md-2">
+              <input class="form-control" type="date" name="hasta" value="<?= h($hasta) ?>">
+            </div>
+            <div class="col-12">
+              <button class="btn btn-outline-secondary" type="submit">Filtrar</button>
+            </div>
+          </form>
+
+          <!-- tabla -->
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th><th>Tipo</th><th>Descripción</th><th>Estado</th>
+                  <th>Usuario</th><th>Producto</th><th>Pedido</th><th>Creada</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach($rows as $r): ?>
+                  <tr>
+                    <td>#<?= (int)$r['id_alerta'] ?></td>
+                    <td><?= h($r['tipo_nombre'] ?? '—') ?></td>
+                    <td><?= h($r['descripcion'] ?? '—') ?></td>
+                    <td>
+                      <?php if(($r['estado']??'')==='resuelta'): ?>
+                        <span class="badge bg-success-subtle text-success">Resuelta</span>
+                      <?php else: ?>
+                        <span class="badge bg-warning-subtle text-warning">Pendiente</span>
+                      <?php endif; ?>
+                    </td>
+                    <td><?= h($r['usuario'] ?? '—') ?></td>
+                    <td><?= h($r['producto'] ?? '—') ?></td>
+                    <td><?= $r['id_pedido']?('#'.(int)$r['id_pedido']):'—' ?></td>
+                    <td><?= h(date('d/m/Y H:i', strtotime($r['created_at']))) ?></td>
+                    <td>
+                      <a class="btn btn-sm btn-outline-primary" href="//admin/alertas/ver.php?id=<?= (int)$r['id_alerta'] ?>">Ver</a>
+                      <?php if (can('alertas.resolver') && ($r['estado']??'')!=='resuelta'): ?>
+                        <a class="btn btn-sm btn-success" href="/admin/alertas/resolver.php?id=<?= (int)$r['id_alerta'] ?>">Resolver</a>
+                      <?php endif; ?>
+                      <?php if (can('alertas.eliminar')): ?>
+                        <a class="btn btn-sm btn-danger" href="/admin/alertas/eliminar.php?id=<?= (int)$r['id_alerta'] ?>">Eliminar</a>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+                <?php if(empty($rows)): ?>
+                  <tr><td colspan="9" class="text-muted">Sin resultados.</td></tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- paginación -->
+          <?php if($pages>1): ?>
+            <nav>
+              <ul class="pagination pagination-sm">
+                <?php for($p=1;$p<=$pages;$p++): $qs=$_GET; $qs['page']=$p; $href='?'.http_build_query($qs); ?>
+                  <li class="page-item <?= $p===$page?'active':'' ?>">
+                    <a class="page-link" href="<?= h($href) ?>"><?= $p ?></a>
+                  </li>
+                <?php endfor; ?>
+              </ul>
+            </nav>
+          <?php endif; ?>
+        </div>
+      </div>
+    </main>
+  </div>
 </div>
-</body></html>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

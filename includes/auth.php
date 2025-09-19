@@ -12,7 +12,7 @@ function require_login(): void {
   if (!is_logged()) {
  
     $next = urlencode($_SERVER['REQUEST_URI'] ?? '');
-    header('Location: /libreria_lapicito/admin/login.php?next='.$next);
+    header('Location:/admin/login.php?next='.$next);
     exit;
   }
 }

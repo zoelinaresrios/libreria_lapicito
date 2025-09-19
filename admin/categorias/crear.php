@@ -1,16 +1,16 @@
 <?php
 include(__DIR__ . '/../../includes/db.php');
-require_once __DIR__ . '/../../includes/auth.php';// Autenticación general (login)
+require_once __DIR__ . '/../../includes/auth.php';
 
 $HAS_ACL = file_exists(__DIR__ . '/../includes/acl.php');
 if ($HAS_ACL) { require_once __DIR__ . '/../includes/acl.php'; }
 else {
-  if (session_status()===PHP_SESSION_NONE) session_start();//revisAa si hay sesion activa
+  if (session_status()===PHP_SESSION_NONE) session_start();
   if (!function_exists('can')) { function can($k){ return true; } }
   if (!function_exists('require_perm')) { function require_perm($k){ return true; } }
 }
 
-require_perm('categorias.crear');// si no tiene retriccion de permisos da todos
+require_perm('categorias.crear');
 
 if (session_status()===PHP_SESSION_NONE) session_start();
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
@@ -20,7 +20,7 @@ $errors = [];
 $nombre = trim($_POST['nombre'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
-  
+
   if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) {
     $errors[] = 'Token inválido.';
   }
@@ -29,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   if (mb_strlen($nombre) < 3)     $errors[] = 'El nombre debe tener al menos 3 caracteres.';
   if (mb_strlen($nombre) > 120)   $errors[] = 'Máximo 120 caracteres.';
 
-  
   if (!$errors) {
     $st = $conexion->prepare("SELECT 1 FROM categoria WHERE nombre = ? LIMIT 1");
     $st->bind_param('s', $nombre);
@@ -53,45 +52,74 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 <head>
   <meta charset="utf-8">
   <title>Nueva categoría — Los Lapicitos</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+ 
+  <link href="/libreria_lapicito/css/admin.css" rel="stylesheet">
 </head>
 <body>
-  <div class="barra"></div>
-  <div class="prod-shell">
-    <aside class="prod-side">
-      <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-        <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
-        <li><a class="active" href="/libreria_lapicito/admin/categorias/">Categorías</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+
+<div class="container-fluid">
+  <div class="row">
+
+    <aside class="col-12 col-md-3 col-lg-2 p-3 bg-light sidebar">
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" href="/admin/index.php">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link" href="/admin/productos/">Productos</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/admin/categorias/">Categorías</a></li>
+        <li class="nav-item"><a class="nav-link text-danger" href="/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
 
-    <main class="prod-main">
-      <div class="inv-title">Nueva categoría</div>
+    <main class="col-12 col-md-9 col-lg-10 p-4">
+      <h4 class="mb-3">Nueva categoría</h4>
 
-      <div class="prod-card">
-        <?php if ($errors): ?>
-          <div class="alert-error">
-            <?php foreach($errors as $e): ?><div><?= h($e) ?></div><?php endforeach; ?>
-          </div>
-        <?php endif; ?>
+      <?php if ($errors): ?>
+        <div class="alert alert-danger">
+          <?php foreach($errors as $e): ?>
+            <div><?= h($e) ?></div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
 
-        <form method="post" class="form-vert">
-          <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
-          <label for="nombre">Nombre</label>
-          <input class="u-full-width" type="text" id="nombre" name="nombre" maxlength="120"
-                 value="<?= h($nombre) ?>" placeholder="Ej: Papelería" required>
-          <div class="form-actions">
-            <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/categorias/">Cancelar</a>
-            <button class="btn-filter" type="submit">Crear</button>
-          </div>
-        </form>
+      <?php if(!empty($_SESSION['flash_ok'])): ?>
+        <div class="alert alert-success"><?= h($_SESSION['flash_ok']); unset($_SESSION['flash_ok']); ?></div>
+      <?php endif; ?>
+
+      <div class="card">
+        <div class="card-body">
+          <form method="post" class="row gy-3">
+            <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+
+            <div class="col-12 col-md-8 col-lg-6">
+              <label for="nombre" class="form-label">Nombre</label>
+              <input
+                type="text"
+                class="form-control"
+                id="nombre"
+                name="nombre"
+                maxlength="120"
+                value="<?= h($nombre) ?>"
+                placeholder="Ej: Papelería"
+                required
+                autofocus
+              >
+              <div class="form-text">Entre 3 y 120 caracteres.</div>
+            </div>
+
+            <div class="col-12 d-flex gap-2 justify-content-end">
+              <a class="btn btn-outline-secondary" href="/libreria_lapicito/admin/categorias/">Cancelar</a>
+              <button class="btn btn-primary" type="submit">Crear</button>
+            </div>
+          </form>
+        </div>
       </div>
+
     </main>
   </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

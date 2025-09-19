@@ -17,15 +17,14 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(16)); }
 
 $id = (int)($_GET['id'] ?? 0);
-if ($id<=0) { header('Location: /libreria_lapicito/admin/categorias/'); exit; }
-
+if ($id<=0) { header('Location: /admin/categorias/'); exit; }
 
 $st = $conexion->prepare("SELECT id_categoria, nombre FROM categoria WHERE id_categoria=?");
 $st->bind_param('i', $id);
 $st->execute();
 $cat = $st->get_result()->fetch_assoc();
 $st->close();
-if (!$cat) { header('Location: /libreria_lapicito/admin/categorias/'); exit; }
+if (!$cat) { header('Location: /admin/categorias/'); exit; }
 
 $errors = [];
 $nombre = trim($_POST['nombre'] ?? $cat['nombre']);
@@ -52,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $st->execute();
     $st->close();
     $_SESSION['flash_ok'] = 'Categoría actualizada.';
-    header('Location: /libreria_lapicito/admin/categorias/'); exit;
+    header('Location: /admin/categorias/'); exit;
   }
 }
 ?>
@@ -61,45 +60,72 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 <head>
   <meta charset="utf-8">
   <title>Editar categoría — Los Lapicitos</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link href="/css/admin.css" rel="stylesheet">
 </head>
 <body>
-  <div class="barra"></div>
-  <div class="prod-shell">
-    <aside class="prod-side">
-      <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-        <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
-        <li><a class="active" href="/libreria_lapicito/admin/categorias/">Categorías</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+
+<div class="container-fluid">
+  <div class="row">
+    
+    <aside class="col-12 col-md-3 col-lg-2 p-3 bg-light sidebar">
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" href="/admin/index.php">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link" href="/admin/productos/">Productos</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/admin/categorias/">Categorías</a></li>
+        <li class="nav-item"><a class="nav-link text-danger" href="/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
 
-    <main class="prod-main">
-      <div class="inv-title">Editar categoría</div>
+    <!-- Main -->
+    <main class="col-12 col-md-9 col-lg-10 p-4">
+      <h4 class="mb-3">Editar categoría</h4>
 
-      <div class="prod-card">
-        <?php if ($errors): ?>
-          <div class="alert-error">
-            <?php foreach($errors as $e): ?><div><?= h($e) ?></div><?php endforeach; ?>
-          </div>
-        <?php endif; ?>
+      <?php if ($errors): ?>
+        <div class="alert alert-danger">
+          <?php foreach($errors as $e): ?><div><?= h($e) ?></div><?php endforeach; ?>
+        </div>
+      <?php endif; ?>
 
-        <form method="post" class="form-vert">
-          <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
-          <label for="nombre">Nombre</label>
-          <input class="u-full-width" type="text" id="nombre" name="nombre" maxlength="120"
-                 value="<?= h($nombre) ?>" required>
-          <div class="form-actions">
-            <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/categorias/">Cancelar</a>
-            <button class="btn-filter" type="submit">Guardar cambios</button>
-          </div>
-        </form>
+      <?php if(!empty($_SESSION['flash_ok'])): ?>
+        <div class="alert alert-success"><?= h($_SESSION['flash_ok']); unset($_SESSION['flash_ok']); ?></div>
+      <?php endif; ?>
+
+      <div class="card">
+        <div class="card-body">
+          <form method="post" class="row gy-3">
+            <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+
+            <div class="col-12 col-md-8 col-lg-6">
+              <label for="nombre" class="form-label">Nombre</label>
+              <input
+                type="text"
+                class="form-control"
+                id="nombre"
+                name="nombre"
+                maxlength="120"
+                value="<?= h($nombre) ?>"
+                required
+                autofocus
+              >
+              <div class="form-text">Entre 3 y 120 caracteres.</div>
+            </div>
+
+            <div class="col-12 d-flex gap-2 justify-content-end">
+              <a class="btn btn-outline-secondary" href="/libreria_lapicito/admin/categorias/">Cancelar</a>
+              <button class="btn btn-primary" type="submit">Guardar cambios</button>
+            </div>
+          </form>
+        </div>
       </div>
     </main>
   </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
