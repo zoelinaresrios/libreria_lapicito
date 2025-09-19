@@ -1,8 +1,8 @@
 <?php
 $host = 'localhost';
-$user = 'root';
-$password = '';
-$database = 'librerial';
+$user = 'Zava';
+$password = 'Zava4567';
+$database = 'libreria';
 
 $conexion = new mysqli($host, $user, $password, $database);
 if ($conexion->connect_error) {

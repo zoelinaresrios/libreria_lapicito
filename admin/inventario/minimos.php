@@ -1,5 +1,4 @@
 <?php
-// /libreria_lapicito/admin/inventario/minimos.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
@@ -24,7 +23,7 @@ $page=max(1,(int)($_GET['page']??1)); $perPage=25; $offset=($page-1)*$perPage;
 $cats=[]; $rc=$conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
 while($row=$rc->fetch_assoc()) $cats[]=$row;
 
-// Aplica cambios si POST
+// Aplica cambios 
 $errors=[];
 if($_SERVER['REQUEST_METHOD']==='POST'){
   if(!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) $errors[]='Token inválido.';
