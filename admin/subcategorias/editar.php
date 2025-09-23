@@ -17,7 +17,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES,'UTF-8'); }
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 $id = (int)($_GET['id'] ?? ($_POST['id'] ?? 0));
-if($id<=0){ header('Location: /libreria_lapicito/admin/subcategorias/'); exit; }
+if($id<=0){ header('Location: /admin/subcategorias/'); exit; }
 
 // Catálogo categorías
 $cats=[]; $r=$conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
@@ -27,7 +27,7 @@ while($row=$r->fetch_assoc()) $cats[]=$row;
 $st=$conexion->prepare("SELECT id_subcategoria, id_categoria, nombre FROM subcategoria WHERE id_subcategoria=?");
 $st->bind_param('i',$id); $st->execute();
 $sc=$st->get_result()->fetch_assoc(); $st->close();
-if(!$sc){ header('Location: /libreria_lapicito/admin/subcategorias/'); exit; }
+if(!$sc){ header('Location: /admin/subcategorias/'); exit; }
 
 $idCat=(int)($_POST['id_categoria'] ?? $sc['id_categoria']);
 $nombre=trim($_POST['nombre'] ?? $sc['nombre']);
@@ -54,22 +54,23 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $st->bind_param('isi',$idCat,$nombre,$id);
     $st->execute(); $st->close();
     $_SESSION['flash_ok']='Subcategoría actualizada.';
-    header('Location: /libreria_lapicito/admin/subcategorias/?cat='.$idCat); exit;
+    header('Location: /admin/subcategorias/?cat='.$idCat); exit;
   }
 }
 ?>
 <!doctype html><html lang="es"><head>
 <meta charset="utf-8"><title>Editar subcategoría — Los Lapicitos</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-<link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+<link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
+
 </head><body>
 <div class="barra"></div>
 <div class="prod-shell">
   <aside class="prod-side">
     <ul class="prod-nav">
-      <li><a href="/libreria_lapicito/admin/subcategorias/">Subcategorías</a></li>
+      <li><a href="/admin/subcategorias/">Subcategorías</a></li>
     </ul>
   </aside>
 
@@ -95,7 +96,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         <input class="u-full-width" type="text" name="nombre" maxlength="120" value="<?= h($nombre) ?>" required>
 
         <div class="form-actions">
-          <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/subcategorias/?cat=<?= (int)$idCat ?>">Cancelar</a>
+          <a class="btn-sm btn-muted" href="/admin/subcategorias/?cat=<?= (int)$idCat ?>">Cancelar</a>
           <button class="btn-filter" type="submit">Guardar cambios</button>
         </div>
       </form>

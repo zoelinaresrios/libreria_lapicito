@@ -67,18 +67,18 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   <meta charset="utf-8">
   <title>Nuevo usuario — Los Lapicitos</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+  <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
 </head>
 <body>
   <div class="barra"></div>
   <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-        <li><a class="active" href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+        <li><a href="/admin/index.php">inicio</a></li>
+        <li><a class="active" href="/admin/usuarios/">Usuarios</a></li>
+        <li><a href="/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
 
@@ -128,7 +128,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
           </div>
 
           <div class="form-actions">
-            <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/usuarios/">Cancelar</a>
+            <a class="btn-sm btn-muted" href="/admin/usuarios/">Cancelar</a>
             <button class="btn-filter" type="submit">Crear</button>
           </div>
         </form>

@@ -67,7 +67,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
                   KEY (id_producto), KEY (id_usuario)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
               ");
-              // Para importación no sabemos prev: guardamos -1 como marcador
+            
               $st=$conexion->prepare("INSERT INTO inventario_mov (id_producto,tipo,cantidad,motivo,stock_prev,stock_nuevo,id_usuario) VALUES (?,?,?,?,?,?,?)");
               $mot='Importación CSV'; $cant=$stk; $prev=-1; $nuevo=$stk;
               $tipo='ajuste';
@@ -90,17 +90,17 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 <!doctype html><html lang="es"><head>
 <meta charset="utf-8"><title>Importar CSV — Inventario</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-<link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+ <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
 </head><body>
 <div class="barra"></div>
 <div class="prod-shell">
   <aside class="prod-side">
     <ul class="prod-nav">
-      <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
-      <li><a href="/libreria_lapicito/admin/inventario/exportar_csv.php">Exportar CSV</a></li>
-      <li><a class="active" href="/libreria_lapicito/admin/inventario/importar_csv.php">Importar CSV</a></li>
+      <li><a href="/admin/inventario/">Inventario</a></li>
+      <li><a href="/admin/inventario/exportar_csv.php">Exportar CSV</a></li>
+      <li><a class="active" href="/admin/inventario/importar_csv.php">Importar CSV</a></li>
     </ul>
   </aside>
 
@@ -129,12 +129,12 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         </select>
 
         <div class="form-actions">
-          <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/inventario/">Cancelar</a>
+          <a class="btn-sm btn-muted" href="/admin/inventario/">Cancelar</a>
           <button class="btn-filter" type="submit">Importar</button>
         </div>
       </form>
 
-      <p class="muted">Tip: primero <a href="/libreria_lapicito/admin/inventario/exportar_csv.php">exportá</a> el CSV, editalo y luego volvé a importarlo.</p>
+      <p class="muted">Tip: primero <a href="/admin/inventario/exportar_csv.php">exportá</a> el CSV, editalo y luego volvé a importarlo.</p>
     </div>
   </main>
 </div>

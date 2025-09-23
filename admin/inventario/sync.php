@@ -15,5 +15,5 @@ $conexion->query("INSERT IGNORE INTO inventario (id_producto,stock_actual,stock_
 
 if (session_status()===PHP_SESSION_NONE) session_start();
 $_SESSION['flash_ok']='Inventario sincronizado: filas creadas para productos sin registro.';
-header('Location: /libreria_lapicito/admin/inventario/');
+header('Location: /admin/inventario/');
 exit;

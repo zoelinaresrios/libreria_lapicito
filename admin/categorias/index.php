@@ -13,7 +13,7 @@ if ($HAS_ACL) {
 }
 
 if (function_exists('is_logged') && !is_logged()) {
-  header('Location: /libreria_lapicito/admin/login.php'); exit;
+  header('Location: /admin/login.php'); exit;
 }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -92,46 +92,49 @@ $st->close();
   <meta charset="utf-8">
   <title>Categorías — Los Lapicitos</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+ <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
+
 </head>
 <body>
+
+  
   <div class="barra"></div>
 
   <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a  href="/libreria_lapicito/admin/index.php">inicio</a></li>
+        <li><a href="/admin/index.php">inicio</a></li>
        
         <?php if (can('productos.ver')): ?>
-        <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
+        <li><a href="/admin/productos/">Productos</a></li>
         <?php endif; ?>
-        <li><a class="active" href="/libreria_lapicito/admin/categorias/">categorias</a></li>
+        <li><a  class="active"  href="/admin/categorias/">categorias</a></li>
         <?php if (can('inventario.ver')): ?>
-           <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
-        <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
+           <li><a href="/admin/subcategorias/">subcategorias</a></li>
+        <li><a href="/admin/inventario/">Inventario</a></li>
         <?php endif; ?>
         <?php if (can('pedidos.aprobar')): ?>
-        <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
+        <li><a href="/admin/pedidos/">Pedidos</a></li>
         <?php endif; ?>
         <?php if (can('alertas.ver')): ?>
-        <li><a href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
+        <li><a href="/admin/alertas/">Alertas</a></li>
         <?php endif; ?>
         <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
-        <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
+        <li><a href="/admin/reportes/">Reportes</a></li>
         <?php endif; ?>
          <?php if (can('ventas.rapidas')): ?>
-        <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
+        <li><a href="/admin/ventas/">Ventas</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
-        <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
+        <li><a href="/admin/usuarios/">Usuarios</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar')): ?>
-        <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
+        <li><a href="/admin/roles/">Roles y permisos</a></li>
         <?php endif; ?>
-        <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+        <li><a href="/admin/ajustes/">Ajustes</a></li>
+        <li><a href="/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
 
@@ -144,7 +147,7 @@ $st->close();
         <div class="prod-head">
           <h5>Categorías</h5>
           <?php if (can('categorias.crear')): ?>
-            <a class="btn-add" href="/libreria_lapicito/admin/categorias/crear.php">+ Añadir Categoría</a>
+            <a class="btn-add" href="/admin/categorias/crear.php">+ Añadir Categoría</a>
           <?php endif; ?>
         </div>
 
@@ -187,10 +190,10 @@ $st->close();
                     ?>
                   </td>
                   <td>
-                    <a class="btn-sm" href="/libreria_lapicito/admin/categorias/editar.php?id=<?= (int)$r['id_categoria'] ?>">Editar</a>
+                    <a class="btn-sm" href="/admin/categorias/editar.php?id=<?= (int)$r['id_categoria'] ?>">Editar</a>
                   </td>
                   <td>
-                    <a class="btn-sm" href="/libreria_lapicito/admin/categorias/eliminar.php?id=<?= (int)$r['id_categoria'] ?>">eliminar</a>
+                    <a class="btn-sm" href="/admin/categorias/eliminar.php?id=<?= (int)$r['id_categoria'] ?>">eliminar</a>
                   </td>
                 </tr>
               <?php endforeach; ?>

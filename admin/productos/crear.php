@@ -3,7 +3,7 @@ include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
 if (function_exists('is_logged') && !is_logged()) {
-  header('Location: /libreria_lapicito/admin/login.php'); exit;
+  header('Location: admin/login.php'); exit;
 }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -147,9 +147,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="utf-8">
   <title>Crear producto — Los Lapicitos</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+ <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
 </head>
 <body>
 
@@ -159,8 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/productos/">← Volver a Productos</a></li>
-        <li><a class="active" href="/libreria_lapicito/admin/productos/crear.php"><strong>Crear producto</strong></a></li>
+        <li><a href="/admin/productos/">← Volver a Productos</a></li>
+        <li><a class="active" href="/admin/productos/crear.php"><strong>Crear producto</strong></a></li>
       </ul>
     </aside>
 

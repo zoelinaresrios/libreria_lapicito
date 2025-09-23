@@ -5,165 +5,199 @@ require_once __DIR__ . '/../../includes/auth.php';
 $HAS_ACL = file_exists(__DIR__ . '/../includes/acl.php');
 if ($HAS_ACL) { require_once __DIR__ . '/../includes/acl.php'; }
 else {
-    // Si no existe ACL, asegura la sesión permiten todo 
   if (session_status()===PHP_SESSION_NONE) session_start();
   if (!function_exists('can')) { function can($k){ return true; } }
   if (!function_exists('require_perm')) { function require_perm($k){ return true; } }
 }
-require_perm('alertas.ver');// Exige el permiso para ver el módulo de alertas
+require_perm('alertas.ver');
 
-if (session_status()===PHP_SESSION_NONE) session_start();// revisa que haya sesion activada
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+if (session_status()===PHP_SESSION_NONE) session_start();
 
-if (empty($_SESSION['csrf'])) $_SESSION['csrf']=bin2hex(random_bytes(16));//Genera token CSRF si no existe (proteccion)
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES,'UTF-8'); }
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);// Configura mysqli para no tener errores
+// CSRF
+if (empty($_SESSION['csrf'])) $_SESSION['csrf']=bin2hex(random_bytes(16));
+$csrf = $_SESSION['csrf'];
 
-
-$errors=[];// Acumulador de errores
-if ($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['accion'] ?? '')==='atender') {
-  if (!can('alertas.atender')) $errors[]='No tenés permiso.'; // Verifica permiso
-  if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) $errors[]='Token inválido.';  // Verificación CSRF (previene ataques)
-
-  $id_alerta=(int)($_POST['id_alerta'] ?? 0);
-  $id_usuario=(int)($_SESSION['id_usuario'] ?? 0);
-
-  if ($id_alerta<=0) $errors[]='ID inválido.';
-  if (!$errors) {  // Si no hay errores, ejecuta
-    $st=$conexion->prepare("UPDATE alerta SET atendida=1, atendida_por=?, fecha_atendida=NOW() WHERE id_alerta=?");
-    $st->bind_param('ii',$id_usuario,$id_alerta);
-    $st->execute(); $st->close();
-    $_SESSION['flash_ok']="Alerta #$id_alerta marcada como atendida.";
-    header('Location: '.$_SERVER['REQUEST_URI']); exit;
+// Marcar atendida
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['accion']) && $_POST['accion']==='atender') {
+  if (empty($_POST['csrf']) || $_POST['csrf']!==$csrf) { http_response_code(400); exit('CSRF inválido'); }
+  require_perm('alertas.atender');
+  $id = (int)($_POST['id'] ?? 0);
+  if ($id>0) {
+    $uid = (int)($_SESSION['user']['id_usuario'] ?? 0);
+    $stmt = $conexion->prepare("UPDATE alerta SET atendida=1, fecha_atendida=NOW(), atendida_por=? WHERE id_alerta=? AND atendida=0");
+    $stmt->bind_param('ii', $uid, $id);
+    $stmt->execute();
+    $_SESSION['flash_ok']='Alerta marcada como atendida.';
   }
+  header('Location: '.$_SERVER['REQUEST_URI']); exit;
 }
-// filtros
-$q      = trim($_GET['q'] ?? '');
-$tipo   = (int)($_GET['tipo'] ?? 0);       
-$estado = $_GET['estado'] ?? '';          
 
-$page    = max(1,(int)($_GET['page'] ?? 1));
-$perPage = 20;
-$offset  = ($page-1)*$perPage;
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES,'UTF-8'); }
 
-$tipos=[]; // Carga de tipos 
-$r=$conexion->query("SELECT id_tipo_alerta,nombre_tipo FROM tipo_alerta ORDER BY nombre_tipo");
-while($row=$r->fetch_assoc()) $tipos[]=$row;
+// Filtros
+$q        = trim($_GET['q'] ?? '');
+$idSuc    = (int)($_GET['suc'] ?? 0);
+$idCat    = (int)($_GET['cat'] ?? 0);
+$idProv   = (int)($_GET['prov'] ?? 0);
+$tipo     = (int)($_GET['tipo'] ?? 0); // 0 todos, 1 SB, 2 SS, 3 NV
+$estado   = (int)($_GET['estado'] ?? 0); // 0 activas, 1 atendidas, 2 todas
+$desde    = $_GET['desde'] ?? '';
+$hasta    = $_GET['hasta'] ?? '';
+$diasNV   = (int)($_GET['dias_nv'] ?? 30); // para botón generar
 
-$where=[]; $params=[]; $types='';
-if ($q!==''){ // Filtro por texto 
-  $where[]="(a.producto_nombre LIKE ? OR a.producto_codigo LIKE ?)";
-  $params[]="%$q%"; $params[]="%$q%"; $types.='ss';
+$page = max(1,(int)($_GET['page'] ?? 1));
+$perPage=20; $offset=($page-1)*$perPage;
 
-} // Filtro por estado
-if ($tipo>0){ $where[]="a.id_tipo_alerta=?"; $params[]=$tipo; $types.='i'; }
-if ($estado==='pend'){ $where[]="a.atendida=0"; }
-if ($estado==='atend'){ $where[]="a.atendida=1"; }
+// Catálogos
+$cats  = $conexion->query("SELECT id_categoria,nombre FROM categoria ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
+$provs = $conexion->query("SELECT id_proveedor,nombre FROM proveedor ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
+$sucs  = $conexion->query("SELECT id_sucursal,nombre FROM sucursal ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
 
-$whereSql=$where?('WHERE '.implode(' AND ',$where)):'';
+$w = []; $types=''; $params=[];
+if ($estado===0) { $w[]="a.atendida=0"; }
+elseif ($estado===1){ $w[]="a.atendida=1"; } // 2 = todas (no filtro)
 
-$sqlCount="SELECT COUNT(*) total FROM alerta a $whereSql";
-$st=$conexion->prepare($sqlCount);
-if ($types) $st->bind_param($types,...$params);
-$st->execute();
-$total=(int)($st->get_result()->fetch_assoc()['total']??0);
-$st->close();
-$pages=max(1,(int)ceil($total/$perPage));// Cálculo de páginas
+if ($tipo>0){ $w[]="a.id_tipo_alerta=?"; $types.='i'; $params[]=$tipo; }
+if ($idSuc>0){ $w[]="i.id_sucursal=?";    $types.='i'; $params[]=$idSuc; }
+if ($idProv>0){ $w[]="p.id_proveedor=?";  $types.='i'; $params[]=$idProv; }
+if ($idCat>0){ $w[]="sc.id_categoria=?";  $types.='i'; $params[]=$idCat; } // via subcategoria
+if ($q!==''){ $w[]="(p.nombre LIKE ? OR p.codigo LIKE ?)"; $types.='ss'; $params[]="%$q%"; $params[]="%$q%"; }
+if ($desde!==''){ $w[]="DATE(a.fecha_creada) >= ?"; $types.='s'; $params[]=$desde; }
+if ($hasta!==''){ $w[]="DATE(a.fecha_creada) <= ?"; $types.='s'; $params[]=$hasta; }
 
-$sql="
-  SELECT a.*, ta.nombre_tipo, u.nombre AS atendido_por
-  FROM alerta a
-  LEFT JOIN tipo_alerta ta ON ta.id_tipo_alerta=a.id_tipo_alerta
-  LEFT JOIN usuario u ON u.id_usuario=a.atendida_por
-  $whereSql
-  ORDER BY a.fecha_creada DESC
-  LIMIT ? OFFSET ?
-";
-$typesList=$types.'ii'; $paramsList=$params;
-$paramsList[]=$perPage; $paramsList[]=$offset;
+$where = $w ? ('WHERE '.implode(' AND ', $w)) : '';
 
-$st=$conexion->prepare($sql);
-$st->bind_param($typesList,...$paramsList);
-$st->execute();
-$rows=$st->get_result()->fetch_all(MYSQLI_ASSOC);
-$st->close();
+// Conteo
+$sqlCount = "
+  SELECT COUNT(*) c
+    FROM alerta a
+    JOIN inventario i ON i.id_inventario=a.id_inventario
+    JOIN producto p   ON p.id_producto=a.id_producto
+    LEFT JOIN subcategoria sc ON sc.id_subcategoria=p.id_subcategoria
+    $where";
+$st=$conexion->prepare($sqlCount); if($types) $st->bind_param($types,...$params); $st->execute();
+$total=(int)($st->get_result()->fetch_assoc()['c'] ?? 0); $st->close();
+$pages=max(1,(int)ceil($total/$perPage));
+
+// Listado
+$sqlList = "
+  SELECT a.id_alerta, a.id_tipo_alerta, a.atendida, a.fecha_creada, a.fecha_atendida,
+         p.id_producto, p.nombre AS producto, p.codigo,
+         i.id_inventario, i.id_sucursal, i.stock_actual, i.stock_minimo,
+         s.nombre AS sucursal,
+         pr.nombre AS proveedor,
+         ta.nombre_tipo
+    FROM alerta a
+    JOIN inventario i ON i.id_inventario=a.id_inventario
+    JOIN sucursal s   ON s.id_sucursal=i.id_sucursal
+    JOIN producto p   ON p.id_producto=a.id_producto
+    LEFT JOIN proveedor pr ON pr.id_proveedor=p.id_proveedor
+    JOIN tipo_alerta ta ON ta.id_tipo_alerta=a.id_tipo_alerta
+    LEFT JOIN subcategoria sc ON sc.id_subcategoria=p.id_subcategoria
+    $where
+   ORDER BY a.atendida ASC, a.fecha_creada DESC
+   LIMIT ? OFFSET ?";
+$typesList = $types.'ii'; $paramsList=$params; $paramsList[]=$perPage; $paramsList[]=$offset;
+
+$st=$conexion->prepare($sqlList); $st->bind_param($typesList, ...$paramsList); $st->execute();
+$rows=$st->get_result()->fetch_all(MYSQLI_ASSOC); $st->close();
+
+$chipsTipo=[0=>'Todas',1=>'Stock bajo',2=>'Sin stock',3=>'Sin ventas'];
+$chipsEstado=[0=>'Activas',1=>'Atendidas',2=>'Todas'];
 ?>
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <title>Alertas — Los Lapicitos</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8"><title>Alertas — Los Lapicitos</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/vendor/normalize.css">
+<link rel="stylesheet" href="/vendor/skeleton.css">
+<link rel="stylesheet" href="/css/style.css?v=13">
+<link rel="stylesheet" href="/css/toast.css?v=1">
+<style>
+.badge.alerta{padding:.15rem .5rem;border-radius:8px;font-size:12px;font-weight:700}
+.badge.sb{background:#fff2cc;border:1px solid #ffe08a}
+.badge.ss{background:#ffd6d6;border:1px solid #ff9c9c}
+.badge.nv{background:#e5f0ff;border:1px solid #b9d2ff}
+.row .btn-gen{margin-left:.5rem}
+</style>
 </head>
 <body>
 <div class="barra"></div>
-
-  <div class="prod-shell">
-    <aside class="prod-side">
-      <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-       
-        <?php if (can('productos.ver')): ?>
-        <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
-        <?php endif; ?>
-        <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
-        <?php if (can('inventario.ver')): ?>
-           <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
-        <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
-        <?php endif; ?>
-        <?php if (can('pedidos.aprobar')): ?>
-        <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
-        <?php endif; ?>
-        <?php if (can('alertas.ver')): ?>
-        <li><a class="active" href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
-        <?php endif; ?>
-        <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
-        <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
-        <?php endif; ?>
-         <?php if (can('ventas.rapidas')): ?>
-        <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
-        <?php endif; ?>
-        <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
-        <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
-        <?php endif; ?>
-        <?php if (can('usuarios.gestionar')): ?>
-        <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
-        <?php endif; ?>
-        <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
-      </ul>
-    </aside>
+<div class="prod-shell">
+  <aside class="prod-side">
+    <ul class="prod-nav">
+      <li><a href="/admin/index.php">Inicio</a></li>
+      <li><a href="/admin/productos/">Productos</a></li>
+      <li><a href="/admin/categorias/">Categorías</a></li>
+      <li><a href="/admin/subcategorias/">Subcategorías</a></li>
+      <li><a href="/admin/inventario/">Inventario</a></li>
+      <li><a href="/admin/pedidos/">Pedidos</a></li>
+      <li><a class="active" href="/admin/alertas/">Alertas</a></li>
+      <li><a href="/admin/reportes/">Reportes</a></li>
+      <li><a href="/admin/ventas/">Ventas</a></li>
+      <li><a href="/admin/usuarios/">Usuarios</a></li>
+    </ul>
+  </aside>
 
   <main class="prod-main">
     <div class="inv-title">Panel administrativo — Alertas</div>
 
-    <?php if(!empty($_SESSION['flash_ok'])): ?>
-      <div class="alert-ok"><?= h($_SESSION['flash_ok']); unset($_SESSION['flash_ok']); ?></div>
-    <?php endif; ?>
-    <?php if($errors): ?>
-      <div class="alert-error"><?php foreach($errors as $e) echo '<div>'.h($e).'</div>'; ?></div>
-    <?php endif; ?>
-
     <div class="prod-card">
-      <div class="prod-head"><h5>Alertas</h5></div>
+      <div class="prod-head">
+        <h5>Alertas activas</h5>
+        <div class="flex">
+          <form method="post" action="/admin/alertas/generar.php" style="display:inline">
+            <input type="hidden" name="csrf" value="<?=$csrf?>">
+            <input type="hidden" name="dias_sin_ventas" value="<?=$diasNV?>">
+            <button class="btn-add btn-gen" type="submit">Generar ahora</button>
+          </form>
+          <form method="post" action="/admin/alertas/enviar_resumen.php" style="display:inline;margin-left:.5rem">
+  <input type="hidden" name="csrf" value="<?=$csrf?>">
+  <input type="hidden" name="suc" value="<?= (int)$idSuc ?>">
+  <button class="btn-sm" type="submit">Enviar listado Stock Bajo</button>
+</form>
+
+          <form method="get" style="display:inline">
+            <input type="number" name="dias_nv" value="<?=$diasNV?>" min="1" style="width:120px" />
+            <button class="btn-sm" type="submit">Aplicar días sin ventas</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="prod-toolbar">
+        <?php foreach($chipsEstado as $id=>$lbl):
+          $qs=$_GET; $qs['estado']=$id; unset($qs['page']); ?>
+          <a class="chip <?= ($estado===$id?'on':'') ?>" href="?<?=h(http_build_query($qs))?>"><?=$lbl?></a>
+        <?php endforeach; ?>
+        <span style="width:12px;display:inline-block"></span>
+        <?php foreach($chipsTipo as $id=>$lbl):
+          $qs=$_GET; $qs['tipo']=$id; unset($qs['page']); ?>
+          <a class="chip <?= ($tipo===$id?'on':'') ?>" href="?<?=h(http_build_query($qs))?>"><?=$lbl?></a>
+        <?php endforeach; ?>
+      </div>
 
       <form class="prod-filters" method="get">
-        <input type="text" name="q" value="<?= h($q) ?>" placeholder="Buscar producto…">
-        <select name="tipo">
-          <option value="0">Todos los tipos</option>
-          <?php foreach($tipos as $t): ?>
-            <option value="<?= (int)$t['id_tipo_alerta'] ?>" <?= $tipo===(int)$t['id_tipo_alerta']?'selected':'' ?>>
-              <?= h($t['nombre_tipo']) ?>
-            </option>
+        <input class="input-search" type="text" name="q" value="<?=h($q)?>" placeholder="Buscar producto / código…">
+        <select name="prov">
+          <option value="0">Todos los proveedores</option>
+          <?php foreach($provs as $p): ?>
+            <option value="<?=$p['id_proveedor']?>" <?=$idProv===$p['id_proveedor']?'selected':''?>><?=h($p['nombre'])?></option>
           <?php endforeach; ?>
         </select>
-        <select name="estado">
-          <option value="">Todas</option>
-          <option value="pend" <?= $estado==='pend'?'selected':'' ?>>Pendientes</option>
-          <option value="atend" <?= $estado==='atend'?'selected':'' ?>>Atendidas</option>
+        <select name="cat">
+          <option value="0">Todas las categorías</option>
+          <?php foreach($cats as $c): ?>
+            <option value="<?=$c['id_categoria']?>" <?=$idCat===$c['id_categoria']?'selected':''?>><?=h($c['nombre'])?></option>
+          <?php endforeach; ?>
         </select>
+        <select name="suc">
+          <option value="0">Todas las sucursales</option>
+          <?php foreach($sucs as $s): ?>
+            <option value="<?=$s['id_sucursal']?>" <?=$idSuc===$s['id_sucursal']?'selected':''?>><?=h($s['nombre'])?></option>
+          <?php endforeach; ?>
+        </select>
+        <input type="date" name="desde" value="<?=h($desde)?>">
+        <input type="date" name="hasta" value="<?=h($hasta)?>">
         <button class="btn-filter" type="submit">Filtrar</button>
       </form>
 
@@ -171,61 +205,58 @@ $st->close();
         <table class="u-full-width">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Fecha</th>
-              <th>Tipo</th>
-              <th>Producto</th>
-              <th>Stock</th>
-              <th>Estado</th>
-              <th>Acciones</th>
+              <th>#</th><th>Tipo</th><th>Producto</th><th>Sucursal</th>
+              <th>Stock</th><th>Proveedor</th><th>Creada</th><th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <?php foreach($rows as $r): ?>
+            <?php foreach($rows as $r): 
+              $bclass = $r['id_tipo_alerta']==1?'sb':($r['id_tipo_alerta']==2?'ss':'nv'); ?>
               <tr>
-                <td>#<?= (int)$r['id_alerta'] ?></td>
+                <td><?= (int)$r['id_alerta'] ?></td>
+                <td><span class="badge alerta <?=$bclass?>"><?= h($r['nombre_tipo']) ?></span></td>
+                <td><?= h($r['producto']) ?> <small class="muted"><?= h($r['codigo']) ?></small></td>
+                <td><?= h($r['sucursal']) ?></td>
+                <td><?= (int)$r['stock_actual'] ?> / min <?= (int)$r['stock_minimo'] ?></td>
+                <td><?= h($r['proveedor'] ?? '—') ?></td>
                 <td><?= h($r['fecha_creada']) ?></td>
-                <td><?= h($r['nombre_tipo'] ?? '—') ?></td>
-                <td><?= h($r['producto_nombre'] ?? '') ?> (<?= h($r['producto_codigo'] ?? '') ?>)</td>
-                <td><?= (int)$r['stock_actual'] ?>/<?= (int)$r['stock_minimo'] ?></td>
                 <td>
-                  <?php if($r['atendida']): ?>
-                    <span class="badge ok">Atendida</span>
-                    <?php if($r['atendido_por']): ?> por <?= h($r['atendido_por']) ?><?php endif; ?>
-                  <?php else: ?>
-                    <span class="badge warn">Pendiente</span>
-                  <?php endif; ?>
-                </td>
-                <td>
-                  <a class="btn-sm" href="/libreria_lapicito/admin/productos/editar.php?id=<?= (int)$r['id_producto'] ?>">Ver producto</a>
                   <?php if(!$r['atendida'] && can('alertas.atender')): ?>
-                    <form method="post" style="display:inline">
-                      <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
-                      <input type="hidden" name="accion" value="atender">
-                      <input type="hidden" name="id_alerta" value="<?= (int)$r['id_alerta'] ?>">
-                      <button class="btn-sm">Atender</button>
-                    </form>
+                  <form method="post" style="display:inline">
+                    <input type="hidden" name="csrf" value="<?=$csrf?>">
+                    <input type="hidden" name="accion" value="atender">
+                    <input type="hidden" name="id" value="<?=$r['id_alerta']?>">
+                    <button class="btn-sm" type="submit">Marcar atendida</button>
+                  </form>
+                  <?php else: ?>
+                    <span class="muted">Atendida <?= h($r['fecha_atendida'] ?? '') ?></span>
                   <?php endif; ?>
                 </td>
               </tr>
             <?php endforeach; ?>
-            <?php if(empty($rows)): ?>
-              <tr><td colspan="7" class="muted">Sin resultados.</td></tr>
+            <?php if (empty($rows)): ?>
+              <tr><td colspan="8" class="muted">Sin alertas con estos filtros.</td></tr>
             <?php endif; ?>
           </tbody>
         </table>
       </div>
 
       <?php if($pages>1): ?>
-        <div class="prod-pager">
-          <?php for($p=1;$p<=$pages;$p++):
-            $qs=$_GET; $qs['page']=$p; $href='?'.http_build_query($qs); ?>
-            <a class="<?= $p===$page?'on':'' ?>" href="<?= h($href) ?>"><?= $p ?></a>
-          <?php endfor; ?>
-        </div>
+      <div class="prod-pager">
+        <?php for($p=1;$p<=$pages;$p++): $qs=$_GET; $qs['page']=$p; ?>
+          <a class="<?= $p===$page?'on':'' ?>" href="?<?=h(http_build_query($qs))?>"><?=$p?></a>
+        <?php endfor; ?>
+      </div>
       <?php endif; ?>
     </div>
   </main>
 </div>
-</body>
-</html>
+
+<?php
+$FLASH_OK  = $_SESSION['flash_ok']  ?? '';
+$FLASH_ERR = $_SESSION['flash_err'] ?? '';
+unset($_SESSION['flash_ok'], $_SESSION['flash_err']);
+?>
+<script>window.__FLASH__={ok:<?=json_encode($FLASH_OK,JSON_UNESCAPED_UNICODE)?>,err:<?=json_encode($FLASH_ERR,JSON_UNESCAPED_UNICODE)?>};</script>
+<script src="/js/toast.js?v=1"></script>
+</body></html>

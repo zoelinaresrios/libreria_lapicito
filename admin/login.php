@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 
 
 if (function_exists('is_logged') && is_logged()) {
-  header('Location: /libreria_lapicito/admin/index.php'); exit;
+  header('Location: /admin/index.php'); exit;
 }
 
 $error = '';
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'email'=>$u['email'],
         'id_rol'=>(int)$u['id_rol'],
       ];
-      header('Location: /libreria_lapicito/admin/index.php'); exit;
+      header('Location: /admin/index.php'); exit;
     } else {
       $error = 'Credenciales inválidas';
     }
@@ -44,9 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="utf-8">
   <title>Ingresar — Los Lapicitos</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
+
 </head>
 <body>
 
@@ -64,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <p class="desc">
             Bienvenido a tu sistema de gestión de inventario. Mantén el control de tus
             productos, ventas y pedidos de forma fácil y rápida.
-            mail:admin@loslapicitos.com contraseña:Admin123!
+           
           </p>
 
           <?php if ($error): ?>

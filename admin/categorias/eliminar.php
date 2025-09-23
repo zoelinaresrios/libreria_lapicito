@@ -17,7 +17,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(16)); }
 
 $id = (int)($_GET['id'] ?? ($_POST['id'] ?? 0));
-if ($id<=0) { header('Location: /libreria_lapicito/admin/categorias/'); exit; }
+if ($id<=0) { header('Location: /admin/categorias/'); exit; }
 
 $sql = "
   SELECT
@@ -35,7 +35,7 @@ $st->execute();
 $cat = $st->get_result()->fetch_assoc();
 $st->close();
 
-if (!$cat) { header('Location: /libreria_lapicito/admin/categorias/'); exit; }
+if (!$cat) { header('Location: /admin/categorias/'); exit; }
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD']==='POST') {
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       $st->execute();
       $st->close();
       $_SESSION['flash_ok'] = 'Categoría eliminada.';
-      header('Location: /libreria_lapicito/admin/categorias/'); exit;
+      header('Location: /admin/categorias/'); exit;
     }
   }
 }
@@ -62,19 +62,19 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   <meta charset="utf-8">
   <title>Eliminar categoría — Los Lapicitos</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+  <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
 </head>
 <body>
   <div class="barra"></div>
   <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-        <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
-        <li><a class="active" href="/libreria_lapicito/admin/categorias/">Categorías</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+        <li><a href="/admin/index.php">inicio</a></li>
+        <li><a href="/admin/productos/">Productos</a></li>
+        <li><a class="active" href="/admin/categorias/">Categorías</a></li>
+        <li><a href="/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
 
@@ -95,12 +95,12 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 
         <?php if ((int)$cat['subcats']>0 || (int)$cat['productos']>0): ?>
           <p class="muted">💡 Primero elimina o reasigna las subcategorías/productos.</p>
-          <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/categorias/">Volver</a>
+          <a class="btn-sm btn-muted" href="/admin/categorias/">Volver</a>
         <?php else: ?>
           <form method="post">
             <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
             <input type="hidden" name="id" value="<?= (int)$id ?>">
-            <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/categorias/">Cancelar</a>
+            <a class="btn-sm btn-muted" href="/admin/categorias/">Cancelar</a>
             <button class="btn-danger" type="submit" onclick="return confirm('¿Eliminar definitivamente?')">Eliminar</button>
           </form>
         <?php endif; ?>

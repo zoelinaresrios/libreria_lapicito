@@ -17,7 +17,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 $idp = (int)($_GET['id'] ?? 0);
-if ($idp<=0) { header('Location: /libreria_lapicito/admin/inventario/'); exit; }
+if ($idp<=0) { header('Location: /admin/inventario/'); exit; }
 
 
 $conexion->query("
@@ -42,7 +42,7 @@ $st = $conexion->prepare("SELECT id_producto, nombre FROM producto WHERE id_prod
 $st->bind_param('i', $idp); $st->execute();
 $prod = $st->get_result()->fetch_assoc();
 $st->close();
-if (!$prod) { header('Location: /libreria_lapicito/admin/inventario/'); exit; }
+if (!$prod) { header('Location: /admin/inventario/'); exit; }
 
 // Filtros
 $tipo    = $_GET['tipo']   ?? '';   // ingreso, egreso, ajuste
@@ -108,16 +108,16 @@ $st->close();
   <meta charset="utf-8">
   <title>Movimientos de inventario — Los Lapicitos</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+   <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
 </head>
 <body>
   <div class="barra"></div>
   <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
+        <li><a href="/admin/inventario/">Inventario</a></li>
         <li><a class="active" href="#">Movimientos</a></li>
       </ul>
     </aside>
@@ -183,7 +183,7 @@ $st->close();
         <?php endif; ?>
 
         <div class="form-actions">
-          <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/inventario/">Volver</a>
+          <a class="btn-sm btn-muted" href="/admin/inventario/">Volver</a>
         </div>
       </div>
     </main>

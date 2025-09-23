@@ -40,19 +40,19 @@ $st->execute(); $rows=$st->get_result()->fetch_all(MYSQLI_ASSOC); $st->close();
 <!doctype html><html lang="es"><head>
 <meta charset="utf-8"><title>Stock bajo — Inventario</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-<link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+ <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
 </head><body>
 <div class="barra"></div>
 <div class="prod-shell">
   <aside class="prod-side">
     <ul class="prod-nav">
-      <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
-      <li><a class="active" href="/libreria_lapicito/admin/inventario/bajo.php">Bajo stock</a></li>
-      <li><a href="/libreria_lapicito/admin/inventario/minimos.php">Mínimos (lote)</a></li>
-      <li><a href="/libreria_lapicito/admin/inventario/exportar_csv.php">Exportar CSV</a></li>
-      <li><a href="/libreria_lapicito/admin/inventario/importar_csv.php">Importar CSV</a></li>
+      <li><a href="/admin/inventario/">Inventario</a></li>
+      <li><a class="active" href="/admin/inventario/bajo.php">Bajo stock</a></li>
+      <li><a href="/admin/inventario/minimos.php">Mínimos (lote)</a></li>
+      <li><a href="/admin/inventario/exportar_csv.php">Exportar CSV</a></li>
+      <li><a href="/admin/inventario/importar_csv.php">Importar CSV</a></li>
     </ul>
   </aside>
 
@@ -93,9 +93,9 @@ $st->execute(); $rows=$st->get_result()->fetch_all(MYSQLI_ASSOC); $st->close();
                 <td><?= h($r['categoria'] ?? '—') ?></td>
                 <td><span class="badge no"><?= (int)$r['stock_actual'] ?></span></td>
                 <td><?= (int)$r['stock_minimo'] ?></td>
-                <td><a class="btn-sm" href="/libreria_lapicito/admin/inventario/ajustar.php?id=<?= (int)$r['id_producto'] ?>">Ajustar</a></td>
+                <td><a class="btn-sm" href="/admin/inventario/ajustar.php?id=<?= (int)$r['id_producto'] ?>">Ajustar</a></td>
                 <td>
-                  <a class="btn-sm" href="/libreria_lapicito/admin/pedidos/crear.php?id_producto=<?= (int)$r['id_producto'] ?>&sugerido=<?= max(5,$faltan) ?>">
+                  <a class="btn-sm" href="/admin/pedidos/crear.php?id_producto=<?= (int)$r['id_producto'] ?>&sugerido=<?= max(5,$faltan) ?>">
                     Borrador
                   </a>
                 </td>

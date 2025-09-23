@@ -1,5 +1,4 @@
 <?php
-// /libreria_lapicito/admin/inventario/minimos.php
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 
@@ -24,7 +23,7 @@ $page=max(1,(int)($_GET['page']??1)); $perPage=25; $offset=($page-1)*$perPage;
 $cats=[]; $rc=$conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
 while($row=$rc->fetch_assoc()) $cats[]=$row;
 
-// Aplica cambios si POST
+// Aplica cambios 
 $errors=[];
 if($_SERVER['REQUEST_METHOD']==='POST'){
   if(!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) $errors[]='Token inválido.';
@@ -91,17 +90,17 @@ $st->execute(); $rows=$st->get_result()->fetch_all(MYSQLI_ASSOC); $st->close();
 <!doctype html><html lang="es"><head>
 <meta charset="utf-8"><title>Mínimos (lote) — Inventario</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-<link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+ <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
 </head><body>
 <div class="barra"></div>
 <div class="prod-shell">
   <aside class="prod-side">
     <ul class="prod-nav">
-      <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
-      <li><a href="/libreria_lapicito/admin/inventario/bajo.php">Bajo stock</a></li>
-      <li><a class="active" href="/libreria_lapicito/admin/inventario/minimos.php">Mínimos (lote)</a></li>
+      <li><a href="/admin/inventario/">Inventario</a></li>
+      <li><a href="/admin/inventario/bajo.php">Bajo stock</a></li>
+      <li><a class="active" href="/admin/inventario/minimos.php">Mínimos (lote)</a></li>
     </ul>
   </aside>
 
@@ -161,8 +160,8 @@ $st->execute(); $rows=$st->get_result()->fetch_all(MYSQLI_ASSOC); $st->close();
 
         <div class="form-actions">
           <button class="btn-filter" type="submit">Guardar mínimos</button>
-          <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/inventario/exportar_csv.php">Exportar CSV</a>
-          <a class="btn-sm" href="/libreria_lapicito/admin/inventario/importar_csv.php">Importar CSV</a>
+          <a class="btn-sm btn-muted" href="/admin/inventario/exportar_csv.php">Exportar CSV</a>
+          <a class="btn-sm" href="/admin/inventario/importar_csv.php">Importar CSV</a>
         </div>
       </form>
 

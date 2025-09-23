@@ -7,7 +7,7 @@
 <title><?= htmlspecialchars($page_title ?? 'Los Lapicitos — Admin') ?></title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-<link rel="stylesheet" href="/libreria_lapicito/admin/css/style.css">
+<link rel="stylesheet" href="css/style.css">
 <style>
   body{background:#f7f8ff}
   .topbar{padding:12px 0;border-bottom:1px solid #e7e9fb;background:#fff;margin-bottom:18px}

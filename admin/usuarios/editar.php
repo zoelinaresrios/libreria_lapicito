@@ -16,7 +16,7 @@ if (empty($_SESSION['csrf'])) { $_SESSION['csrf']=bin2hex(random_bytes(16)); }
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES,'UTF-8'); }
 
 $id = (int)($_GET['id'] ?? ($_POST['id'] ?? 0));
-if($id<=0){ header('Location: /libreria_lapicito/admin/usuarios/'); exit; }
+if($id<=0){ header('Location: /admin/usuarios/'); exit; }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
@@ -29,7 +29,7 @@ while($row=$r->fetch_assoc()) $estados[]=$row;
 $st=$conexion->prepare("SELECT id_usuario, nombre, email, id_rol, id_estado_usuario FROM usuario WHERE id_usuario=?");
 $st->bind_param('i',$id); $st->execute();
 $u=$st->get_result()->fetch_assoc(); $st->close();
-if(!$u){ header('Location: /libreria_lapicito/admin/usuarios/'); exit; }
+if(!$u){ header('Location: /admin/usuarios/'); exit; }
 
 $nombre=trim($_POST['nombre'] ?? $u['nombre']);
 $email =trim($_POST['email']  ?? $u['email']);
@@ -74,7 +74,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 
       $conexion->commit();
       $_SESSION['flash_ok']='Usuario actualizado.';
-      header('Location: /libreria_lapicito/admin/usuarios/'); exit;
+      header('Location: /admin/usuarios/'); exit;
     }catch(Exception $e){
       $conexion->rollback();
       $errors[]='Error al guardar: '.$e->getMessage();
@@ -88,18 +88,18 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   <meta charset="utf-8">
   <title>Editar usuario — Los Lapicitos</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+<link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
 </head>
 <body>
   <div class="barra"></div>
   <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
-        <li><a class="active" href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+        <li><a href="/admin/index.php">inicio</a></li>
+        <li><a class="active" href="/admin/usuarios/">Usuarios</a></li>
+        <li><a href="/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
 
@@ -152,7 +152,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
           </fieldset>
 
           <div class="form-actions">
-            <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/usuarios/">Cancelar</a>
+            <a class="btn-sm btn-muted" href="/admin/usuarios/">Cancelar</a>
             <button class="btn-filter" type="submit">Guardar cambios</button>
           </div>
         </form>

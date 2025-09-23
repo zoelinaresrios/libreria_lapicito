@@ -31,7 +31,7 @@ $st->bind_param('i',$idp);
 $st->execute();
 $item=$st->get_result()->fetch_assoc();
 $st->close();
-if(!$item){ header('Location: /libreria_lapicito/admin/inventario/'); exit; }
+if(!$item){ header('Location: /admin/inventario/'); exit; }
 
 $tipo   = $_POST['tipo'] ?? '';
 $cant   = (int)($_POST['cantidad'] ?? 0);
@@ -95,7 +95,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 
       $conexion->commit();
       $_SESSION['flash_ok']='Inventario actualizado.';
-      header('Location: /libreria_lapicito/admin/inventario/'); exit;
+      header('Location: /admin/inventario/'); exit;
     }catch(Exception $e){
       $conexion->rollback();
       $errors[]='No se pudo guardar: '.$e->getMessage();
@@ -112,16 +112,16 @@ $sugerido = max(5, $faltan); //ajustar
   <meta charset="utf-8">
   <title>Ajustar inventario — Los Lapicitos</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+  <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
 </head>
 <body>
   <div class="barra"></div>
   <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
+        <li><a href="/admin/inventario/">Inventario</a></li>
       </ul>
     </aside>
 
@@ -137,7 +137,7 @@ $sugerido = max(5, $faltan); //ajustar
         <p>
           <?php if($faltan>0): ?>
             Faltan <strong><?= $faltan ?></strong> para alcanzar el mínimo.
-            <a class="btn-sm" href="/libreria_lapicito/admin/pedidos/crear.php?id_producto=<?= (int)$item['id_producto'] ?>&sugerido=<?= (int)$sugerido ?>">
+            <a class="btn-sm" href="/admin/pedidos/crear.php?id_producto=<?= (int)$item['id_producto'] ?>&sugerido=<?= (int)$sugerido ?>">
               Crear pedido sugerido (<?= (int)$sugerido ?>)
             </a>
           <?php else: ?>
@@ -167,7 +167,7 @@ $sugerido = max(5, $faltan); //ajustar
           <input class="u-full-width" type="number" name="nuevo_min" min="0" value="<?= h($newMin) ?>" placeholder="Dejar vacío para no cambiar">
 
           <div class="form-actions">
-            <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/inventario/">Cancelar</a>
+            <a class="btn-sm btn-muted" href="/admin/inventario/">Cancelar</a>
             <button class="btn-filter" type="submit">Guardar</button>
           </div>
         </form>

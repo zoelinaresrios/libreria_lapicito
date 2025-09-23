@@ -21,17 +21,17 @@ $idCat  = (int)($_GET['cat'] ?? 0);
 $page= max(1,(int)($_GET['page']??1));
 $perPage=15; $offset=($page-1)*$perPage;
 
-// Catálogo de categorías (para filtro y combos)
+//  categorías (para filtro)
 $cats=[]; $r=$conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
 while($row=$r->fetch_assoc()) $cats[]=$row;
 
-// WHERE
+
 $w=[]; $params=[]; $types='';
 if ($q!==''){ $w[]="sc.nombre LIKE ?"; $params[]="%$q%"; $types.='s'; }
 if ($idCat>0){ $w[]="sc.id_categoria=?"; $params[]=$idCat; $types.='i'; }
 $whereSql = $w?('WHERE '.implode(' AND ',$w)):'';
 
-// Total para paginación
+
 $sqlCount="
   SELECT COUNT(*) total
   FROM subcategoria sc
@@ -44,7 +44,6 @@ $total=(int)($st->get_result()->fetch_assoc()['total']??0);
 $st->close();
 $pages=max(1,(int)ceil($total/$perPage));
 
-// Lista con métricas (productos y stock acumulado)
 $sqlList="
   SELECT
     sc.id_subcategoria,
@@ -74,46 +73,52 @@ $st->close();
 <!doctype html><html lang="es"><head>
 <meta charset="utf-8"><title>Subcategorías — Los Lapicitos</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-<link rel="stylesheet" href="/libreria_lapicito/css/style.css">
-</head><body>
-<div class="barra"></div>
+<link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
+
+</head>
+<body>
+
+  
+  <div class="barra"></div>
+
   <div class="prod-shell">
-    <aside class="prod-side">
+   <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a  href="/libreria_lapicito/admin/index.php">inicio</a></li>
+        <li><a  href="/admin/index.php">inicio</a></li>
        
         <?php if (can('productos.ver')): ?>
-        <li><a href="/libreria_lapicito/admin/productos/">Productos</a></li>
+        <li><a href="/admin/productos/">Productos</a></li>
         <?php endif; ?>
-        <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
+        <li><a href="/admin/categorias/">categorias</a></li>
         <?php if (can('inventario.ver')): ?>
-           <li><a class="active" href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
-        <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
+           <li><a class="active" href="/admin/subcategorias/">subcategorias</a></li>
+        <li><a href="/admin/inventario/">Inventario</a></li>
         <?php endif; ?>
         <?php if (can('pedidos.aprobar')): ?>
-        <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
+        <li><a href="/admin/pedidos/">Pedidos</a></li>
         <?php endif; ?>
         <?php if (can('alertas.ver')): ?>
-        <li><a href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
+        <li><a href="/admin/alertas/">Alertas</a></li>
         <?php endif; ?>
         <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
-        <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
+        <li><a href="/admin/reportes/">Reportes</a></li>
         <?php endif; ?>
          <?php if (can('ventas.rapidas')): ?>
-        <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
+        <li><a href="/admin/ventas/">Ventas</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
-        <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
+        <li><a href="/admin/usuarios/">Usuarios</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar')): ?>
-        <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
+        <li><a href="/admin/roles/">Roles y permisos</a></li>
         <?php endif; ?>
-        <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+        <li><a href="/admin/ajustes/">Ajustes</a></li>
+        <li><a href="/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
+
 
     
   <main class="prod-main">
@@ -130,7 +135,7 @@ $st->close();
       <div class="prod-head">
         <h5>Subcategorías</h5>
         <?php if (can('subcategorias.crear')): ?>
-          <a class="btn-add" href="/libreria_lapicito/admin/subcategorias/crear.php<?= $idCat>0?'?cat='.((int)$idCat):'' ?>">+ Añadir Subcategoría</a>
+          <a class="btn-add" href="/admin/subcategorias/crear.php<?= $idCat>0?'?cat='.((int)$idCat):'' ?>">+ Añadir Subcategoría</a>
         <?php endif; ?>
       </div>
 
@@ -168,8 +173,8 @@ $st->close();
                 <td><?= h($r['categoria'] ?? '—') ?></td>
                 <td><?= (int)$r['productos'] ?></td>
                 <td><?= (int)$r['stock_total'] ?></td>
-                <td><a class="btn-sm" href="/libreria_lapicito/admin/subcategorias/editar.php?id=<?= (int)$r['id_subcategoria'] ?>">Editar</a></td>
-                <td><a class="btn-sm" href="/libreria_lapicito/admin/subcategorias/eliminar.php?id=<?= (int)$r['id_subcategoria'] ?>">eliminar</a></td>
+                <td><a class="btn-sm" href="/admin/subcategorias/editar.php?id=<?= (int)$r['id_subcategoria'] ?>">Editar</a></td>
+                <td><a class="btn-sm" href="/admin/subcategorias/eliminar.php?id=<?= (int)$r['id_subcategoria'] ?>">eliminar</a></td>
               </tr>
             <?php endforeach; ?>
             <?php if(empty($rows)): ?>

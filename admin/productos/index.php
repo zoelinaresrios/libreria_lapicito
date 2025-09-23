@@ -1,35 +1,38 @@
 <?php
-
 include(__DIR__ . '/../../includes/db.php');
 require_once __DIR__ . '/../../includes/auth.php';
 $HAS_ACL = file_exists(__DIR__ . '/../includes/acl.php');
 if ($HAS_ACL) {
   require_once __DIR__ . '/../includes/acl.php';
 } else {
-  
   if (session_status()===PHP_SESSION_NONE) session_start();
   if (!function_exists('can')) { function can($k){ return true; } }
   if (!function_exists('require_perm')) { function require_perm($k){ return true; } }
 }
 
 if (function_exists('is_logged') && !is_logged()) {
-  header('Location: /libreria_lapicito/admin/login.php'); exit;
+  header('Location: /admin/login.php'); exit;
 }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
- 
+if (session_status()===PHP_SESSION_NONE) session_start();
+
+// CSRF para acciones POST
+if (empty($_SESSION['csrf'])) {
+  $_SESSION['csrf'] = bin2hex(random_bytes(16));
+}
+$csrf = $_SESSION['csrf'];
+
 $q       = trim($_GET['q'] ?? '');
 $id_cat  = (int)($_GET['cat'] ?? 0);
-$stock_f = $_GET['stock'] ?? '';           
+$stock_f = $_GET['stock'] ?? '';
 $page    = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 15;
 $offset  = ($page - 1) * $perPage;
 
-
 $cats = [];
 $rC = $conexion->query("SELECT id_categoria, nombre FROM categoria ORDER BY nombre");
 while ($row = $rC->fetch_assoc()) { $cats[] = $row; }
-
 
 $baseFrom = "
   FROM producto p
@@ -47,7 +50,6 @@ $having = [];
 if ($stock_f === 'bajo') { $having[] = "COALESCE(SUM(i.stock_actual),0) <= COALESCE(MIN(i.stock_minimo),0)"; }
 if ($stock_f === 'sin')  { $having[] = "COALESCE(SUM(i.stock_actual),0) = 0"; }
 $havingSql = $having ? ('HAVING '.implode(' AND ', $having)) : '';
-
 
 $sqlCount = "
   SELECT COUNT(*) AS total
@@ -70,13 +72,14 @@ $sqlList = "
   SELECT
     p.id_producto,
     p.nombre,
+    p.activo,                           
     c.nombre AS categoria,
     COALESCE(SUM(i.stock_actual),0) AS stock_total,
     COALESCE(MIN(i.stock_minimo),0) AS stock_min,
     p.precio_venta
   $baseFrom
   $whereSql
-  GROUP BY p.id_producto, p.nombre, categoria, p.precio_venta
+  GROUP BY p.id_producto, p.nombre, p.activo, categoria, p.precio_venta
   $havingSql
   ORDER BY p.nombre ASC
   LIMIT ? OFFSET ?
@@ -98,71 +101,62 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   <meta charset="utf-8">
   <title>Productos — Los Lapicitos</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+  <link rel="stylesheet" href="/vendor/normalize.css?v=2">
+  <link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+  <link rel="stylesheet" href="/css/style.css?v=13">
+ 
 </head>
 <body>
-
-
+ 
   <div class="barra"></div>
-    <div class="prod-shell">
 
+  <div class="prod-shell">
     <aside class="prod-side">
       <ul class="prod-nav">
-        <li><a href="/libreria_lapicito/admin/index.php">inicio</a></li>
+        <li><a  href="/admin/index.php">inicio</a></li>
        
         <?php if (can('productos.ver')): ?>
-        <li><a  class="active" href="/libreria_lapicito/admin/productos/">Productos</a></li>
+        <li><a class="active" href="/admin/productos/">Productos</a></li>
         <?php endif; ?>
-        <li><a href="/libreria_lapicito/admin/categorias/">categorias</a></li>
+        <li><a href="/admin/categorias/">categorias</a></li>
         <?php if (can('inventario.ver')): ?>
-           <li><a href="/libreria_lapicito/admin/subcategorias/">subcategorias</a></li>
-        <li><a href="/libreria_lapicito/admin/inventario/">Inventario</a></li>
+           <li><a href="/admin/subcategorias/">subcategorias</a></li>
+        <li><a href="/admin/inventario/">Inventario</a></li>
         <?php endif; ?>
         <?php if (can('pedidos.aprobar')): ?>
-        <li><a href="/libreria_lapicito/admin/pedidos/">Pedidos</a></li>
+        <li><a href="/admin/pedidos/">Pedidos</a></li>
         <?php endif; ?>
         <?php if (can('alertas.ver')): ?>
-        <li><a href="/libreria_lapicito/admin/alertas/">Alertas</a></li>
+        <li><a href="/admin/alertas/">Alertas</a></li>
         <?php endif; ?>
         <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
-        <li><a href="/libreria_lapicito/admin/reportes/">Reportes</a></li>
+        <li><a href="/admin/reportes/">Reportes</a></li>
         <?php endif; ?>
          <?php if (can('ventas.rapidas')): ?>
-        <li><a href="/libreria_lapicito/admin/ventas/">Ventas</a></li>
+        <li><a href="/admin/ventas/">Ventas</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
-        <li><a href="/libreria_lapicito/admin/usuarios/">Usuarios</a></li>
+        <li><a href="/admin/usuarios/">Usuarios</a></li>
         <?php endif; ?>
         <?php if (can('usuarios.gestionar')): ?>
-        <li><a href="/libreria_lapicito/admin/roles/">Roles y permisos</a></li>
+        <li><a href="/admin/roles/">Roles y permisos</a></li>
         <?php endif; ?>
-        <li><a href="/libreria_lapicito/admin/ajustes/">Ajustes</a></li>
-        <li><a href="/libreria_lapicito/admin/logout.php">Salir</a></li>
+        <li><a href="/admin/ajustes/">Ajustes</a></li>
+        <li><a href="/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
 
-   
     <main class="prod-main">
       <div class="inv-title">Panel administrativo- Productos</div>
 
-    <!-- Main -->
-    <main class="prod-main">
       <div class="prod-card">
         <div class="prod-head">
           <h5>Productos</h5>
-          <a class="btn-add" href="/libreria_lapicito/admin/productos/crear.php">+ Añadir Producto</a>
+          <a class="btn-add" href="/admin/productos/crear.php">+ Añadir Producto</a>
         </div>
 
-        <!-- Filtros -->
         <form class="prod-filters" method="get">
-          <input
-            class="input-search"
-            type="text"
-            name="q"
-            value="<?= h($q) ?>"
-            placeholder="Buscar…">
+          <input class="input-search" type="text" name="q" value="<?= h($q) ?>" placeholder="Buscar…">
           <select name="cat">
             <option value="0">Todas las categorías</option>
             <?php foreach($cats as $c): ?>
@@ -179,7 +173,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
           <button class="btn-filter" type="submit">Filtrar</button>
         </form>
 
-        <!-- Tabla -->
         <div class="table-wrap">
           <table class="u-full-width">
             <thead>
@@ -189,20 +182,24 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
                 <th style="width:220px">Categoría</th>
                 <th style="width:120px">Stock</th>
                 <th style="width:120px">Precio</th>
-                <th style="width:80px">editar</th>
-               <th style="width:80px">eliminar</th>
+                <th style="width:120px">Estado</th>    
+                <th style="width:80px">Editar</th>
               </tr>
             </thead>
             <tbody>
               <?php foreach($rows as $r): ?>
+                <?php
+                  $stT = (int)$r['stock_total'];
+                  $min = (int)$r['stock_min'];
+                  $isOn = (int)($r['activo'] ?? 0) === 1;
+                  $next = $isOn ? 0 : 1;
+                ?>
                 <tr>
                   <td>#<?= (int)$r['id_producto'] ?></td>
                   <td><?= h($r['nombre']) ?></td>
                   <td><?= h($r['categoria'] ?? '—') ?></td>
                   <td>
                     <?php
-                      $stT = (int)$r['stock_total'];
-                      $min = (int)$r['stock_min'];
                       if ($stT <= 0) {
                         echo '<span class="badge no">0</span>';
                       } elseif ($stT <= $min) {
@@ -214,14 +211,24 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
                   </td>
                   <td>$ <?= number_format((float)($r['precio_venta'] ?? 0), 2, ',', '.') ?></td>
                   <td>
-                    <a class="btn-sm" href="/libreria_lapicito/admin/productos/editar.php?id=<?= (int)$r['id_producto'] ?>">
-                      Editar
-                    </a>
+                    <?php if (can('productos.activar')): ?>
+                      <form class="prod-actions" method="post" action="/admin/productos/toggle.php" onsubmit="return confirmToggle(this);">
+                        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                        <input type="hidden" name="id" value="<?= (int)$r['id_producto'] ?>">
+                        <input type="hidden" name="to" value="<?= (int)$next ?>">
+                        <button type="submit"
+                                class="btn-state <?= $isOn ? 'on':'off' ?>"
+                                data-next="<?= (int)$next ?>"
+                                data-name="<?= h($r['nombre']) ?>">
+                          <?= $isOn ? 'Activo' : 'Desactivado' ?>
+                        </button>
+                      </form>
+                    <?php else: ?>
+                      <span class="badge <?= $isOn ? 'ok':'no' ?>"><?= $isOn ? 'Activo' : 'Desactivado' ?></span>
+                    <?php endif; ?>
                   </td>
-                    <td>
-                    <a class="btn-sm" href="/libreria_lapicito/admin/productos/eliminar.php?id=<?= (int)$r['id_producto'] ?>">
-                     eliminar
-                    </a>
+                  <td>
+                    <a class="btn-sm" href="/admin/editar.php?id=<?= (int)$r['id_producto'] ?>">Editar</a>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -232,7 +239,6 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
           </table>
         </div>
 
-        <!-- Paginación -->
         <?php if ($pages > 1): ?>
           <div class="prod-pager">
             <?php for($p=1; $p<=$pages; $p++):
@@ -244,5 +250,17 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
       </div>
     </main>
   </div>
+
+  <script>
+    function confirmToggle(form){
+      var btn   = form.querySelector('.btn-state');
+      var next  = btn.getAttribute('data-next'); // "1" = activar, "0" = desactivar
+      var name  = btn.getAttribute('data-name') || 'este producto';
+      var msg   = next === '1'
+        ? ('¿Confirmás ACTIVAR «'+name+'»?')
+        : ('¿Confirmás DESACTIVAR «'+name+'»?');
+      return confirm(msg);
+    }
+  </script>
 </body>
 </html>

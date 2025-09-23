@@ -17,7 +17,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES,'UTF-8'); }
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 $id = (int)($_GET['id'] ?? ($_POST['id'] ?? 0));
-if($id<=0){ header('Location: /libreria_lapicito/admin/subcategorias/'); exit; }
+if($id<=0){ header('Location: /admin/subcategorias/'); exit; }
 
 // Datos + conteo de productos
 $st=$conexion->prepare("
@@ -30,7 +30,7 @@ $st=$conexion->prepare("
 ");
 $st->bind_param('i',$id); $st->execute();
 $sc=$st->get_result()->fetch_assoc(); $st->close();
-if(!$sc){ header('Location: /libreria_lapicito/admin/subcategorias/'); exit; }
+if(!$sc){ header('Location: /admin/subcategorias/'); exit; }
 
 $errors=[];
 if($_SERVER['REQUEST_METHOD']==='POST'){
@@ -41,22 +41,23 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $st=$conexion->prepare("DELETE FROM subcategoria WHERE id_subcategoria=?");
     $st->bind_param('i',$id); $st->execute(); $st->close();
     $_SESSION['flash_ok']='Subcategoría eliminada.';
-    header('Location: /libreria_lapicito/admin/subcategorias/?cat='.$sc['id_categoria']); exit;
+    header('Location: /admin/subcategorias/?cat='.$sc['id_categoria']); exit;
   }
 }
 ?>
 <!doctype html><html lang="es"><head>
 <meta charset="utf-8"><title>Eliminar subcategoría — Los Lapicitos</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-<link rel="stylesheet" href="/libreria_lapicito/css/style.css">
+<link rel="stylesheet" href="/vendor/normalize.css?v=2">
+<link rel="stylesheet" href="/vendor/skeleton.css?v=3">
+<link rel="stylesheet" href="/css/style.css?v=13">
+
 </head><body>
 <div class="barra"></div>
 <div class="prod-shell">
   <aside class="prod-side">
     <ul class="prod-nav">
-      <li><a href="/libreria_lapicito/admin/subcategorias/">Subcategorías</a></li>
+      <li><a href="/admin/subcategorias/">Subcategorías</a></li>
     </ul>
   </aside>
 
@@ -70,12 +71,12 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 
       <?php if((int)$sc['productos']>0): ?>
         <p class="muted">No se puede eliminar mientras existan productos asociados.</p>
-        <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/subcategorias/?cat=<?= (int)$sc['id_categoria'] ?>">Volver</a>
+        <a class="btn-sm btn-muted" href="/admin/subcategorias/?cat=<?= (int)$sc['id_categoria'] ?>">Volver</a>
       <?php else: ?>
         <form method="post">
           <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
           <input type="hidden" name="id" value="<?= (int)$id ?>">
-          <a class="btn-sm btn-muted" href="/libreria_lapicito/admin/subcategorias/?cat=<?= (int)$sc['id_categoria'] ?>">Cancelar</a>
+          <a class="btn-sm btn-muted" href="/admin/subcategorias/?cat=<?= (int)$sc['id_categoria'] ?>">Cancelar</a>
           <button class="btn-danger" type="submit" onclick="return confirm('¿Eliminar definitivamente?')">Eliminar</button>
         </form>
       <?php endif; ?>

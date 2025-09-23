@@ -1,16 +1,15 @@
 <?php
 $host = 'localhost';
-$user = 'root';
-$password = '';
-$database = 'librerial';
+$user = 'u156482620_Zava';        
+$password = 'Zava4567';          
+$database = 'u156482620_libreria';
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 $conexion = new mysqli($host, $user, $password, $database);
-if ($conexion->connect_error) {
-   if ($conexion->connect_error) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Conexión fallida']);
-    exit;
-}
+$conexion->set_charset('utf8mb4');
 
+if ($conexion->connect_error) {
+    die("Error de conexión: " . $conexion->connect_error);
 }
 ?>
