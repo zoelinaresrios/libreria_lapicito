@@ -1,9 +1,8 @@
-
 :root{
-  --barra:#e3ad63;    /* amarillito superior */
-  --fondo:#fff3d9;    /* crema del fondo */
-  --texto:#6f665c;    /* marrón/gris */
-  --btn:#8a956e;      /* verde oliva */
+  --barra:#e3ad63;
+  --fondo:#fff3d9;
+  --texto:#6f665c;
+  --btn:#8a956e;
   --btn-txt:#ffffff;
   --borde:rgba(0,0,0,.08);
   --sombra:0 10px 30px rgba(0,0,0,.08);
@@ -13,495 +12,149 @@
   --f3:clamp(14px,1.5vw,16px);
 }
 
-/* Base */
-html,body{margin:0;padding:0}
-body{
-  background:var(--fondo);
-  color:var(--texto);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-}
+/* helpers de color para Bootstrap */
+.bg-fondo{ background:var(--fondo)!important; }
+.text-texto{ color:var(--texto)!important; }
 
-/* Skeleton ya define tipografías, tamaños y spacing.
-   Acomodo márgenes para nuestra portada */
-h1,h2,h3,h4,h5,h6{margin-top:.2rem;margin-bottom:.6rem;}
-
-/*  Barra superior  */
+/* Barra superior */
 .barra{
   height:48px;
   background:var(--barra);
   border-bottom-left-radius:var(--radio);
   border-bottom-right-radius:var(--radio);
-  box-shadow:0 2px 0 #e3ad63;
-  position:relative;
-  overflow:hidden;
+  box-shadow:0 2px 0 rgba(0,0,0,.04);
+  position:relative; overflow:hidden;
 }
 .barra::after{
-  content:"";
-  position:absolute; inset:0;
+  content:""; position:absolute; inset:0;
   background:linear-gradient(90deg,transparent 0 30%,rgba(255,255,255,.16) 50%,transparent 70% 100%);
-  transform:translateX(-100%);
-  animation:barra-brillo 6s linear infinite;
-  pointer-events:none;
+  transform:translateX(-100%); animation:barra-brillo 6s linear infinite;
 }
 @keyframes barra-brillo{to{transform:translateX(100%)}}
 
-/*  Lienzo / layout general  */
-.lienzo{
-  min-height:calc(100dvh - 48px);
-  display:flex;
-  align-items:center;
-  padding:28px 0 56px;
-}
+/* Lienzo */
+.lienzo{ min-height:calc(100dvh - 48px); padding:28px 0 40px; }
+.hero{ margin-top:0; }
 
-/* Skeleton provee .container y .row.
-   Ajustes suaves para espacios laterales */
-.container{padding-left:16px;padding-right:16px}
-
-/* Columna izquierda (texto) */
+/* Tipos y títulos */
+h1,h2,h3,h4,h5,h6{ margin-top:.2rem; margin-bottom:.6rem; }
 .titulo{
-  font-weight:600;
-  font-size:var(--f1);
-  line-height:1.2;
-  letter-spacing:.2px;
-  margin-bottom:14px;
-  position:relative;
+  font-weight:600; font-size:var(--f1); line-height:1.2; letter-spacing:.2px; margin-bottom:14px; position:relative;
 }
 .titulo::after{
-  content:"";
-  position:absolute; left:0; bottom:-8px;
-  width:180px; height:10px;
-  background:linear-gradient(90deg,#edd09b,transparent);
-  border-radius:999px;
-  opacity:.6;
+  content:""; position:absolute; left:0; bottom:-8px;
+  width:180px; height:10px; background:linear-gradient(90deg,#edd09b,transparent);
+  border-radius:999px; opacity:.6;
 }
+.desc{ font-size:var(--f3); line-height:1.55; max-width:46ch; margin:0 0 22px 0; }
 
-.desc{
-  font-size:var(--f3);
-  line-height:1.55;
-  max-width:46ch;
-  margin:0 0 22px 0;
-  
-}
-
-/*  Botón  */
-.btn{
-  font-family: Arial, Helvetica, sans-serif;
-  display:inline-block;
-  background:var(--btn);
-  color:var(--btn-txt) !important;
-  text-decoration:none;
-  font-weight:600;
-  padding:10px 18px;
-  border-radius:10px;
-  border:0;
-  cursor:pointer;
-  box-shadow:0 1px 0 rgba(0,0,0,.06);
-  transition:filter .2s ease, transform .05s ease;
-}
-.btn:hover{filter:brightness(1.06)}
-.btn:active{transform:translateY(1px)}
-
-
-button.btn{appearance:none;border:0}
-
-/*  Columna derecha (ilustración)  */
-.ilustracion{
-  width: 410px; max-width:100%; height:auto;
-  display:inline-block;
-  filter:drop-shadow(0 10px 14px rgba(0,0,0,.08));
-  transition:transform .25s ease;
-}
-@media (hover:hover){
-  .ilustracion:hover{transform:translateY(-3px) rotate(-0.3deg)}
-}
-
-/*  Utilidades  */
-.separar{margin-top:22px}
-.texto-derecha{text-align:right}
-
-
-@media (max-width:800px){
-  .barra{height:46px}
-  .lienzo{min-height:calc(100dvh - 46px); padding:22px 0 36px}
-  .titulo::after{width:140px; bottom:-10px}
-  .texto-derecha{text-align:right} /* mantiene la img a la derecha si querés */
-}
-
-
-/*  Ajustes finos para que calce con el mockup  */
-
-/* Franja: sombra sutil (no color plano) */
-.barra{ box-shadow:0 2px 0 rgba(0,0,0,.04); }
-
-/* Ancho cómodo y separación como en la imagen */
-.lienzo{ padding:28px 0 40px; }
-.container{ max-width:980px; }
-
-/* Form: ancho y espaciado exacto */
-.login-form{ max-width:520px; }
-.login-input{ margin-bottom:12px; }
-
-/* Botón: verde oliva, redondeado y compacto */
-.login-form .btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  min-height:42px; padding:10px 18px;
-  background:#8A956E; color:#fff !important; border:0; border-radius:12px;
-  font-size:14px; font-weight:700; letter-spacing:.02em; text-transform:none;
-  line-height:1; white-space:nowrap; appearance:none; -webkit-appearance:none;
-  box-shadow:none; transition:filter .2s, transform .05s;
-}
-.login-form .btn:hover{ background:#7C8A65; filter:brightness(1.02); }
-.login-form .btn:active{ transform:translateY(1px); }
-
-/* Imagen: tamaño y ubicación como en el mockup */
-.ilustracion{
-  width: clamp(220px, 30vw, 320px);
-  height:auto; display:inline-block;
-  filter:drop-shadow(0 10px 14px rgba(0,0,0,.08));
-}
-.texto-derecha{ text-align:right; }
-
-/* Móvil: apilar y centrar imagen */
-@media (max-width:760px){
-  .texto-derecha{ text-align:center; margin-top:8px; }
-  .ilustracion{ width:220px; }
-}
-
-/* Mensaje de error del login */
-.login-error{
-  background:#fff; border:1px solid #e7b1b1; color:#8a1f1f;
-  border-radius:10px; padding:10px 12px; margin-bottom:10px; max-width:520px;
-}
-/*  Productos (admin/productos)  */
-.inv-title{
-  text-align:center;
-  color:#6f665c;
-  font-weight:600;
-  padding:10px 0 12px;
-}
-
-/* layout */
-.prod-shell{
-  display:grid;
-  grid-template-columns:220px 1fr;
-  gap:0;
-  min-height:calc(100vh - 110px);
-}
-@media (max-width:1000px){ .prod-shell{ grid-template-columns:1fr; } }
-
-/* sidebar */
-.prod-side{
-  background:#fff3d9;      /* crema suave */
-  border-right:1px solid #e6d9bf;
-  padding:14px;
-}
-.prod-nav{ list-style:none; margin:0; padding:0; }
-.prod-nav li{ margin-bottom:8px; }
-.prod-nav a{
-  display:block; padding:8px 10px; border:1px solid #e6d9bf; border-radius:10px;
-  background:#fff; color:#6f665c; text-decoration:none;
-}
-.prod-nav a:hover{ background:#fffef9; border-color:#e9d7b5; }
-.prod-nav a.active{ background:#fffef2; border-color:#e9d7b5; font-weight:700; }
-
-/* main + card */
-.prod-main{ padding:14px; }
-.prod-card{
-  background:#fff9ef;
-  border:1px solid #e6d9bf;
+/* Botón estilo marca (sobre Bootstrap) */
+.btn-olive{
+  --bs-btn-bg: var(--btn);
+  --bs-btn-color: var(--btn-txt);
+  --bs-btn-border-color: var(--btn);
+  --bs-btn-hover-bg: #7C8A65;
+  --bs-btn-hover-border-color: #7C8A65;
+  --bs-btn-active-bg: #6f7d59;
+  --bs-btn-active-border-color: #6f7d59;
   border-radius:12px;
-  padding:12px;
+  font-weight:700;
+  letter-spacing:.02em;
+  box-shadow:none;
 }
 
-/* header de la card */
-.prod-head{
-  display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:8px;
-}
-.btn-add{
-  background:#8a956e; color:#fff !important; border:0; border-radius:12px;
-  padding:8px 12px; font-weight:700; text-decoration:none;
-}
-.btn-add:hover{ background:#7c8a65; }
-
-/* filtros */
-.prod-filters{
-  display:grid; grid-template-columns:1fr 220px 200px 120px;
-  gap:8px; align-items:center; margin-bottom:8px;
-}
-@media (max-width:900px){ .prod-filters{ grid-template-columns:1fr 1fr; } }
-
-.input-search{
-  height:38px; border:1px solid #e6d9bf; border-radius:10px; padding-left:36px; padding-right:10px;
-  background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%239b8e7f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>") no-repeat 10px center;
-}
-.prod-filters select{
-  height:38px; border:1px solid #e6d9bf; border-radius:10px; background:#fff; padding:6px 8px;
-}
-.btn-filter{
-  height:38px; border:1px solid #e6d9bf; background:#fff; border-radius:10px; padding:0 12px;
-  color:#6f665c; font-weight:600;
-}
-.btn-filter:hover{ background:#fffef9; }
-
-/* tabla y pager */
-.table-wrap{ border-radius:10px; overflow:auto; }
-table.u-full-width thead th{ background:#fff3d9; }
-.prod-pager{ text-align:center; margin-top:10px; }
-.prod-pager a{ display:inline-block; padding:4px 8px; border-radius:8px; margin:0 2px; color:#6f665c; text-decoration:none; }
-.prod-pager a.on{ background:#fffef9; border:1px solid #e9d7b5; }
-/* Lupa del buscador: pequeña y a la derecha */
-.prod-search{ position:relative; width:100%; }
-
-.prod-search .icon-search{
-  position:absolute;
-  right:10px;                 /* a la DERECHA */
-  top:50%; transform:translateY(-50%);
-  width:14px; height:14px;    /* chiquita */
-  color:#a89b8b;
-  pointer-events:none;        /* no bloquea clic/teclado */
-  opacity:.95;
+/* Ilustración */
+.ilustracion{
+  filter:drop-shadow(0 10px 14px rgba(0,0,0,.08));
+  width: clamp(220px, 40vw, 360px);
 }
 
-/* deja espacio a la derecha para la lupa */
-.input-search{
-  height:38px;
-  border:1px solid #e6d9bf; border-radius:10px;
-  background:#fff;
-  padding-right:36px;         /* espacio para la lupa */
-  padding-left:10px;
-  box-sizing:border-box;
+/* Ajustes responsivos */
+@media (max-width: 900px){
+  .titulo,.desc{ text-align:center; }
 }
-.input-search:focus{
-  outline:0; border-color:#d8c8a9;
-  box-shadow:0 0 0 3px rgba(225,163,87,.18);
+@media (max-width: 480px){
+  .desc{ font-size:15px; }
 }
-/* Crear Producto */
-.form-grid{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:12px;
-  margin-top:8px;
-}
-@media (max-width:900px){ .form-grid{ grid-template-columns:1fr; } }
-
-.form-actions{
-  grid-column: 1 / -1;
-  display:flex;
-  gap:10px;
-  justify-content:flex-end;
-  margin-top:6px;
+html,body{ overflow-x:hidden; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+/* Fondo general */
+body {
+  background: #f7f8ff;
+  color: #222;
 }
 
-.is-hidden{ display:none; }
-/* Botón chico para acciones en tabla */
-.btn-sm{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:8px;
-  background:var(--btn);
-  color:#fff!important;
-  text-decoration:none;
-  font-weight:600;
-  border:0;
-}
-.btn-sm:hover{ filter:brightness(1.06); }
-.btn-sm.ghost{
-  background:transparent;
-  color:var(--texto)!important;
-  border:1px solid var(--borde);
-}
-/* Dashboard: layout y respiración */
-
-/* Contenedor principal más ancho y con padding cómodo */
-.prod-main{
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 20px 48px;
-}
-
-/* Título del panel */
-.inv-title{
-  font-weight: 700;
-  font-size: clamp(20px, 2.2vw, 26px);
-  margin: 14px 0 18px;
-  color: var(--texto);
-}
-
-/* Sidebar fijo y con separación visual */
-.prod-shell{
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 22px;
-  align-items: start;
-  padding: 18px 16px 40px;
-}
-.prod-side{
-  position: sticky;
-  top: 14px;
-  align-self: start;
-}
-.prod-nav{
-  list-style: none;
-  margin: 0;
-  padding: 10px;
+/* Topbar */
+.topbar {
+  padding: 12px 0;
+  border-bottom: 1px solid #e7e9fb;
   background: #fff;
-  border: 1px solid var(--borde);
-  border-radius: var(--radio-lg);
-  box-shadow: var(--sombra);
+  margin-bottom: 18px;
 }
-.prod-nav li+li{ margin-top: 6px; }
-.prod-nav a{
-  display: block;
-  padding: 10px 12px;
+
+/* KPI Card */
+.kpi-card {
+  border: 1px solid #e7e9fb;
   border-radius: 10px;
-  color: var(--texto);
-  text-decoration: none;
 }
-.prod-nav a:hover{ background: rgba(0,0,0,.035); }
-.prod-nav a.active{
-  background: #fff7e8;
-  border: 1px solid #f1d5a3;
-}
-
-/* Tarjetas con más aire */
-.prod-card{
-  background:#fff;
-  border:1px solid var(--borde);
-  border-radius: var(--radio-lg);
-  box-shadow: var(--sombra);
-  padding: 16px 18px;
-  margin-bottom: 18px;   /* espacio vertical entre tarjetas */
-}
-
-/* Encabezados dentro de tarjetas */
-.prod-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding-bottom: 8px;
-  margin-bottom: 12px;
-  border-bottom: 1px dashed var(--borde);
-}
-.prod-head h5{ margin:0; }
-
-/* Filtros más claros y con separación */
-.prod-filters{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin: 10px 0 16px;
-}
-.prod-filters label{ margin: 0 4px 0 0; }
-.prod-filters .btn-filter{ padding: 8px 14px; }
-
-/* Tablas legibles */
-.table-wrap{ overflow-x:auto; }
-.u-full-width th, .u-full-width td{
-  padding: 10px 10px;
-  vertical-align: middle;
-}
-.u-full-width thead th{
-  font-weight: 600;
-  border-bottom: 2px solid var(--borde);
-}
-.u-full-width tbody tr+tr td{
-  border-top: 1px solid var(--borde);
-}
-
-/* Badges de stock */
-.badge{
-  display:inline-block;
-  min-width: 34px;
-  text-align:center;
-  padding: 4px 8px;
-  border-radius: 999px;
+.kpi-card .big {
+  font-size: 26px;
   font-weight: 700;
-  font-size: 12px;
-}
-.badge.ok{ background:#e6f6ea; color:#226b3d; border:1px solid #c6e9d0; }
-.badge.no{ background:#ffeceb; color:#b94a48; border:1px solid #f2b6b1; }
-
-/* Paginación con aire */
-.prod-pager{
-  display:flex; gap:8px; flex-wrap: wrap;
-  padding-top: 10px; margin-top: 6px; border-top: 1px dashed var(--borde);
-}
-.prod-pager a{
-  display:inline-block; padding:6px 10px; border-radius:8px;
-  border:1px solid var(--borde); text-decoration:none; color:var(--texto);
-}
-.prod-pager a.on{ background:#fff7e8; border-color:#f1d5a3; }
-
-/* Botones chicos */
-.btn-sm{
-  display:inline-block; padding:6px 10px; border-radius:8px;
-  background:var(--btn); color:#fff!important; text-decoration:none; font-weight:600; border:0;
-}
-.btn-sm:hover{ filter:brightness(1.06); }
-.btn-sm.danger{ background:#b94a48; }
-
-/* Utilidad: filas más sueltas de Skeleton */
-.row{ margin-bottom: 18px; }
-.columns{ margin-bottom: 12px; }
-
-/* Grid utilitario (opcional, ver HTML opcional abajo) */
-.grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-3{ display:grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-
-@media (max-width: 980px){
-  .prod-shell{ grid-template-columns: 1fr; }
-  .prod-side{ position:static; }
-  .grid-2, .grid-3{ grid-template-columns: 1fr; }
-}
-/* Rango de fechas (chip compacto) */
-.prod-filters.range{
-  gap: 12px;
-  align-items: center;
-  margin: 6px 0 18px;
 }
 
-.dr-label{
-  font-weight: 600;
-  color: var(--texto);
-  opacity: .85;
+/* Badges */
+.badge-ok {
+  background: #e6ffec;
+  border: 1px solid #b3f0c2;
+  color: #14532d;
+}
+.badge-no {
+  background: #ffe6e6;
+  border: 1px solid #ffc2c2;
+  color: #991b1b;
 }
 
-.dr-fields{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+/* Tablas */
+.table thead th {
   background: #fff;
-  border: 1px solid var(--borde);
-  border-radius: 12px;
-  box-shadow: var(--sombra);
+  font-weight: 600;
+  border-bottom: 2px solid #e7e9fb;
+}
+.table tbody tr+tr td {
+  border-top: 1px solid #e7e9fb;
+}
+body {
+  background: #f7f8ff;
 }
 
-.dr-fields input[type="date"]{
-  appearance: none;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  padding: 6px 4px;
-  border-radius: 8px;
-  font: inherit;
-  color: var(--texto);
-  min-width: 140px;  
+/* Sidebar */
+.sidebar {
+  min-height: 100vh;
+  border-right: 1px solid #e7e9fb;
+}
+.sidebar .nav-link {
+  color: #333;
+  border-radius: 6px;
+  padding: .5rem .75rem;
+}
+.sidebar .nav-link:hover {
+  background: #f1f3ff;
+}
+.sidebar .nav-link.active {
+  font-weight: 600;
+  background: #e9ecef;
 }
 
-.dr-fields input[type="date"]:focus{
-  background: #fff9ec;
-  box-shadow: inset 0 0 0 1px #f1d5a3;
+/* Tablas */
+.table thead th {
+  font-weight: 600;
 }
 
-.dr-sep{
-  opacity: .5;
-  font-weight: 700;
+/* Ajustes de badges si querés más contraste */
+.badge.bg-success-subtle {
+  background: #e9f7ef !important;
+  color: #1e7b43 !important;
 }
+<<<<<<< HEAD
 
 /* icono del date input más discreto */
 .dr-fields input[type="date"]::-webkit-calendar-picker-indicator{
@@ -677,4 +330,9 @@ table.u-full-width thead th{ background:#fff3d9; }
 .kpi-alert .muted{
   font-size:13px;
   color:#777;
+=======
+.badge.bg-warning-subtle {
+  background: #fff4e5 !important;
+  color: #8a5200 !important;
+>>>>>>> 4b042df03e95b0a0e0fac717d150c6628a483783
 }

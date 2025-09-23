@@ -17,7 +17,11 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(16)); }
 
 $id = (int)($_GET['id'] ?? ($_POST['id'] ?? 0));
+<<<<<<< HEAD
 if ($id<=0) { header('Location: /admin/categorias/'); exit; }
+=======
+if ($id<=0) { header('Location: admin/categorias/'); exit; }
+>>>>>>> 4b042df03e95b0a0e0fac717d150c6628a483783
 
 $sql = "
   SELECT
@@ -35,7 +39,11 @@ $st->execute();
 $cat = $st->get_result()->fetch_assoc();
 $st->close();
 
+<<<<<<< HEAD
 if (!$cat) { header('Location: /admin/categorias/'); exit; }
+=======
+if (!$cat) { header('Location: admin/categorias/'); exit; }
+>>>>>>> 4b042df03e95b0a0e0fac717d150c6628a483783
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD']==='POST') {
@@ -51,7 +59,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       $st->execute();
       $st->close();
       $_SESSION['flash_ok'] = 'Categoría eliminada.';
+<<<<<<< HEAD
       header('Location: /admin/categorias/'); exit;
+=======
+      header('Location: admin/categorias/'); exit;
+>>>>>>> 4b042df03e95b0a0e0fac717d150c6628a483783
     }
   }
 }
@@ -61,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 <head>
   <meta charset="utf-8">
   <title>Eliminar categoría — Los Lapicitos</title>
+<<<<<<< HEAD
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="/vendor/normalize.css?v=2">
 <link rel="stylesheet" href="/vendor/skeleton.css?v=3">
@@ -75,24 +88,40 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         <li><a href="/admin/productos/">Productos</a></li>
         <li><a class="active" href="/admin/categorias/">Categorías</a></li>
         <li><a href="/admin/logout.php">Salir</a></li>
+=======
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Estilos del panel -->
+  <link href="/css/admin.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <aside class="col-12 col-md-3 col-lg-2 p-3 bg-light sidebar">
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" href="/admin/index.php">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link" href="/admin/productos/">Productos</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/admin/categorias/">Categorías</a></li>
+        <li class="nav-item"><a class="nav-link text-danger" href="/admin/logout.php">Salir</a></li>
+>>>>>>> 4b042df03e95b0a0e0fac717d150c6628a483783
       </ul>
     </aside>
 
-    <main class="prod-main">
-      <div class="inv-title">Eliminar categoría</div>
-      <div class="prod-card">
-        <?php if ($errors): ?>
-          <div class="alert-error">
-            <?php foreach($errors as $e): ?><div><?= h($e) ?></div><?php endforeach; ?>
-          </div>
-        <?php endif; ?>
+    <!-- Main -->
+    <main class="col-12 col-md-9 col-lg-10 p-4">
+      <h4 class="mb-3">Eliminar categoría</h4>
 
-        <p>Vas a eliminar la categoría <strong><?= h($cat['nombre']) ?></strong>.</p>
-        <ul>
-          <li>Subcategorías asociadas: <strong><?= (int)$cat['subcats'] ?></strong></li>
-          <li>Productos asociados: <strong><?= (int)$cat['productos'] ?></strong></li>
-        </ul>
+      <?php if ($errors): ?>
+        <div class="alert alert-danger">
+          <?php foreach($errors as $e): ?><div><?= h($e) ?></div><?php endforeach; ?>
+        </div>
+      <?php endif; ?>
 
+<<<<<<< HEAD
         <?php if ((int)$cat['subcats']>0 || (int)$cat['productos']>0): ?>
           <p class="muted">💡 Primero elimina o reasigna las subcategorías/productos.</p>
           <a class="btn-sm btn-muted" href="/admin/categorias/">Volver</a>
@@ -104,8 +133,42 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
             <button class="btn-danger" type="submit" onclick="return confirm('¿Eliminar definitivamente?')">Eliminar</button>
           </form>
         <?php endif; ?>
+=======
+      <div class="card">
+        <div class="card-body">
+          <p class="mb-2">
+            Vas a eliminar la categoría <strong><?= h($cat['nombre']) ?></strong>.
+          </p>
+          <ul class="mb-3">
+            <li>Subcategorías asociadas: <strong><?= (int)$cat['subcats'] ?></strong></li>
+            <li>Productos asociados: <strong><?= (int)$cat['productos'] ?></strong></li>
+          </ul>
+
+          <?php if ((int)$cat['subcats']>0 || (int)$cat['productos']>0): ?>
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+              <div>💡 Primero elimina o reasigna las subcategorías/productos.</div>
+            </div>
+            <a class="btn btn-outline-secondary" href="/libreria_lapicito/admin/categorias/">Volver</a>
+          <?php else: ?>
+            <form method="post" class="d-flex gap-2">
+              <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+              <input type="hidden" name="id" value="<?= (int)$id ?>">
+              <a class="btn btn-outline-secondary" href="/libreria_lapicito/admin/categorias/">Cancelar</a>
+              <button class="btn btn-danger"
+                      type="submit"
+                      onclick="return confirm('¿Eliminar definitivamente?')">
+                Eliminar
+              </button>
+            </form>
+          <?php endif; ?>
+        </div>
+>>>>>>> 4b042df03e95b0a0e0fac717d150c6628a483783
       </div>
     </main>
   </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
