@@ -12,11 +12,7 @@ function require_login(): void {
   if (!is_logged()) {
  
     $next = urlencode($_SERVER['REQUEST_URI'] ?? '');
-<<<<<<< HEAD
     header('Location: /admin/login.php?next='.$next);
-=======
-    header('Location:/admin/login.php?next='.$next);
->>>>>>> 4b042df03e95b0a0e0fac717d150c6628a483783
     exit;
   }
 }

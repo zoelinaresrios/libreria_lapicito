@@ -1,0 +1,78 @@
+
+/* ===== Card principal y subcards ===== */
+.pos-panel{
+  background:#fff; border:1px solid var(--borde);
+  border-radius: var(--radio-lg); box-shadow: var(--sombra);
+  padding:18px;
+}
+.pos-grid{
+  display:grid; grid-template-columns: 360px 1fr; gap:18px;
+}
+.pos-card{
+  background:#fff; border:1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: 0 6px 24px rgba(0,0,0,.06);
+  padding:16px;
+}
+.pos-head h5{ margin:0 0 10px 0; }
+
+/* ===== Buscador ===== */
+.pos-search{ display:flex; gap:10px; align-items:center; }
+.input-search{
+  height:38px; padding:0 12px;
+  border:1px solid var(--borde); border-radius:12px; background:#fff;
+}
+.pos-quick{ display:flex; gap:8px; margin-top:12px; }
+.pos-results{
+  margin-top:12px; max-height:360px; overflow:auto;
+  border-top:1px dashed var(--borde);
+}
+.res-item{
+  display:flex; justify-content:space-between; align-items:center;
+  gap:10px; padding:10px 0; border-bottom:1px dashed var(--borde);
+}
+.res-info{ min-width:0; }
+.res-info .res-n{ font-weight:700; }
+.res-info .res-m{ font-size:12px; opacity:.75; }
+.res-add .btn-green{ padding:.45rem .75rem; }
+
+/* ===== Carrito ===== */
+.pos-table{ width:100%; border-collapse:separate; border-spacing:0; }
+.pos-table thead th{
+  background:#fff6df;
+  border-bottom:1px solid var(--borde);
+  font-weight:700;
+}
+.pos-table thead th:first-child{
+  border-top-left-radius:12px;
+}
+.pos-table thead th:last-child{
+  border-top-right-radius:12px;
+}
+.pos-table tbody td{ background:#fff; }
+.item-name{ font-weight:700; margin-bottom:4px; }
+.qty{ width:84px; }
+
+/* Badges coherentes */
+.badge-ok{
+  background:#e9f7ef; border:1px solid #bfe8cf; color:#1e7b43;
+  padding:2px 8px; border-radius:999px; font-size:12px;
+}
+.badge-err, .badge.ss{
+  background:#ffe6e6; border:1px solid #ffc2c2; color:#991b1b;
+  padding:2px 8px; border-radius:999px; font-size:12px;
+}
+
+/* Totales + acción */
+.pos-total{
+  display:flex; justify-content:space-between; align-items:center;
+  margin:14px 0 8px;
+}
+.pos-total-val{ font-size:22px; font-weight:800; }
+.pos-ob{
+  width:100%; height:38px; padding:0 12px;
+  border:1px solid var(--borde); border-radius:12px; background:#fff;
+  margin:8px 0 10px;
+}
+.pos-actions{ display:flex; gap:10px; }
+

@@ -2,7 +2,6 @@
 <!doctype html>
 <html lang="es">
 <head>
-<<<<<<< HEAD
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?= htmlspecialchars($page_title ?? 'Los Lapicitos — Admin') ?></title>
@@ -24,16 +23,6 @@
   .muted{color:#666}
   .table-wrap{overflow:auto}
 </style>
-=======
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?= htmlspecialchars($page_title ?? 'Los Lapicitos — Admin') ?></title>
-
-  <!-- Bootstrap 5 -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Tu estilo -->
-  <link href="/admin/css/style.css" rel="stylesheet">
->>>>>>> 4b042df03e95b0a0e0fac717d150c6628a483783
 </head>
 <body class="min-vh-100">
 

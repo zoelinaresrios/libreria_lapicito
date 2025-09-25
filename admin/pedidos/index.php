@@ -84,22 +84,31 @@ $estados=[1=>'Borrador',2=>'Aprobado',3=>'Enviado',4=>'Recibido',5=>'Cancelado']
 <link rel="stylesheet" href="/css/toast.css?v=1">
 </head>
 <body>
+
 <div class="barra"></div>
 <div class="prod-shell">
-  <aside class="prod-side">
-    <ul class="prod-nav">
-      <li><a href="/admin/index.php">Inicio</a></li>
-      <li><a href="/admin/productos/">Productos</a></li>
-      <li><a href="/admin/categorias/">Categorías</a></li>
-      <li><a href="/admin/subcategorias/">Subcategorías</a></li>
-      <li><a href="/admin/inventario/">Inventario</a></li>
-      <li><a class="active" href="/admin/pedidos/">Pedidos</a></li>
-      <li><a href="/admin/alertas/">Alertas</a></li>
-      <li><a href="/admin/reportes/">Reportes</a></li>
-      <li><a href="/admin/ventas/">Ventas</a></li>
-      <li><a href="/admin/usuarios/">Usuarios</a></li>
-    </ul>
-  </aside>
+    <aside class="prod-side">
+      <ul class="prod-nav">
+        <li><a href="/admin/index.php">inicio</a></li>
+       
+        <li><a href="/admin/productos/">Productos</a></li>
+        <li><a href="/admin/categorias/">categorias</a></li>
+       <li><a  href="/admin/subcategorias/">subcategorias</a></li>
+        <li><a href="/admin/inventario/">Inventario</a></li>
+        <li><a class="active" href="/admin/pedidos/">Pedidos</a></li>
+        <li><a href="/admin/proveedores/">Proveedores</a></li>
+          <li><a href="/admin/sucursales/">sucursales</a></li>
+        <li><a href="/admin/alertas/">Alertas</a></li>
+        <li><a href="/admin/reportes/">Reportes y estadisticas</a></li>
+        <li><a href="/admin/ventas/">Ventas</a></li>
+        <li><a   href="/admin/usuarios/">Usuarios</a></li>
+        <li><a href="/admin/roles/">Roles y permisos</a></li>
+        <li><a href="/admin/ajustes/">Ajustes</a></li>
+         <li><a href="/admin/ajustes/">Audutorias</a></li>
+        <li><a href="/admin/logout.php">Salir</a></li>
+      </ul>
+    </aside>
+
 
   <main class="prod-main">
     <div class="inv-title">Panel administrativo — Gestión de Pedidos</div>

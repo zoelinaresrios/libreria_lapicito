@@ -1,0 +1,76 @@
+:root{
+  --barra:#e3ad63;
+  --fondo:#fff3d9;
+  --texto:#6f665c;
+  --btn:#8a956e;            
+  --btn-txt:#ffffff;
+  --borde:rgba(0,0,0,.08);
+  --sombra:0 10px 30px rgba(0,0,0,.08);
+  --radio:12px;
+}
+
+.prod-main{ max-width:1060px; margin:0 auto; padding:0 8px; }
+.prod-card{ background:#fff; border-radius:12px; box-shadow:var(--sombra); padding:18px; margin-bottom:18px; }
+.prod-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.table-wrap{ overflow:auto; }
+.table-wrap table{ background:#fff; border:1px solid var(--borde); border-radius:var(--radio); width:100%; }
+.table-wrap thead th{ background:#fff6e8; color:#6f665c; border-bottom:1px solid var(--borde); font-weight:700; }
+.table-wrap td, .table-wrap th{ vertical-align:middle; }
+
+.prod-filters{
+  display:flex; flex-wrap:wrap; gap:12px;
+  align-items:center; justify-content:flex-start;
+  margin:8px 0 16px;
+}
+.prod-filters .input-search{
+  height:38px; padding:0 12px; border:1px solid var(--borde); border-radius:12px; background:#fff;
+}
+
+.btn-olive{
+  --bs-btn-bg: var(--btn);
+  --bs-btn-color: var(--btn-txt);
+  --bs-btn-border-color: var(--btn);
+  --bs-btn-hover-bg: #7C8A65;
+  --bs-btn-hover-border-color: #7C8A65;
+  --bs-btn-active-bg: #6f7d59;
+  --bs-btn-active-border-color: #6f7d59;
+}
+
+.btn-sm, .btn-olive, .btn-state, .prod-filters .btn-filter{
+  -webkit-appearance:none; appearance:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  height:38px; line-height:34px;
+  padding:0 14px; border-radius:12px;
+  font-size:10px; font-weight:600;
+  text-decoration:none; cursor:pointer;
+  border:1px solid var(--btn);
+  background:var(--btn); color:var(--btn-txt);
+  transition:filter .15s ease;
+}
+.btn-sm:hover, .btn-olive:hover, .btn-state:hover, .prod-filters .btn-filter:hover{
+  filter:brightness(.95);
+}
+
+
+th.col-accion, td.col-accion{ text-align:center; width:120px; }
+td.col-accion form{ display:inline-flex; margin:0; }      
+td.col-accion a, td.col-accion button{ justify-content:center; } 
+
+
+.ta-r{ text-align:right } .ta-c{ text-align:center } .muted{ opacity:.7 }
+
+/* Tabla un poco más chica */
+.table-wrap table { font-size: 14px; }      
+.table-wrap thead th { font-size: 13px; }   
+
+.btn-sm,
+.btn-olive,
+.btn-state,
+.prod-filters .btn-filter {
+  height: 34px !important;       
+  line-height: 34px !important;
+  padding: 0 12px !important;     
+  font-size: 10px !important;     
+  border-radius: 10px !important; 
+}
+

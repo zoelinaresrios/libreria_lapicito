@@ -52,7 +52,7 @@ if ($idCat>0){ $wExtra[]="sc.id_categoria=?"; $tpExtra.="i"; $paExtra[]=$idCat; 
 if ($idProv>0){ $wExtra[]="p.id_proveedor=?"; $tpExtra.="i"; $paExtra[]=$idProv; }
 $whereExtra = $wExtra ? (' AND '.implode(' AND ',$wExtra)) : '';
 
-// ---------- Exportador CSV ----------
+// Exportador CSV 
 function csvOut($filename, $headers, $rows){
   header('Content-Type: text/csv; charset=utf-8');
   header('Content-Disposition: attachment; filename="'.$filename.'"');
@@ -300,28 +300,30 @@ if ($export==='csv' && $etype==='rot'){
 </style>
 </head>
 <body>
-<div class="barra"></div>
+ <div class="barra"></div>
 
-<div class="prod-shell">
-  <aside class="prod-side">
-    <ul class="prod-nav">
-      <li><a href="/admin/index.php">inicio</a></li>
-      <?php if (can('productos.ver')): ?><li><a href="/admin/productos/">Productos</a></li><?php endif; ?>
-      <li><a href="/admin/categorias/">categorias</a></li>
-      <?php if (can('inventario.ver')): ?>
-        <li><a href="/admin/subcategorias/">subcategorias</a></li>
+  <div class="prod-shell">
+    <aside class="prod-side">
+      <ul class="prod-nav">
+        <li><a  href="/admin/index.php">inicio</a></li>
+       
+        <li><a href="/admin/productos/">Productos</a></li>
+        <li><a href="/admin/categorias/">categorias</a></li>
+       <li><a  href="/admin/subcategorias/">subcategorias</a></li>
         <li><a href="/admin/inventario/">Inventario</a></li>
-      <?php endif; ?>
-      <?php if (can('pedidos.aprobar')): ?><li><a href="/admin/pedidos/">Pedidos</a></li><?php endif; ?>
-      <?php if (can('alertas.ver')): ?><li><a href="/admin/alertas/">Alertas</a></li><?php endif; ?>
-      <?php if ($permSimple): ?><li><a class="active" href="/admin/reportes/">Reportes</a></li><?php endif; ?>
-      <?php if (can('ventas.rapidas')): ?><li><a href="/admin/ventas/">Ventas</a></li><?php endif; ?>
-      <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?><li><a href="/admin/usuarios/">Usuarios</a></li><?php endif; ?>
-      <?php if (can('usuarios.gestionar')): ?><li><a href="/admin/roles/">Roles y permisos</a></li><?php endif; ?>
-      <li><a href="/admin/ajustes/">Ajustes</a></li>
-      <li><a href="/admin/logout.php">Salir</a></li>
-    </ul>
-  </aside>
+        <li><a href="/admin/pedidos/">Pedidos</a></li>
+        <li><a href="/admin/proveedores/">Proveedores</a></li>
+          <li><a href="/admin/sucursales/">sucursales</a></li>
+        <li><a href="/admin/alertas/">Alertas</a></li>
+        <li><a class="active" href="/admin/reportes/">Reportes y estadisticas</a></li>
+        <li><a href="/admin/ventas/">Ventas</a></li>
+        <li><a href="/admin/usuarios/">Usuarios</a></li>
+        <li><a href="/admin/roles/">Roles y permisos</a></li>
+        <li><a href="/admin/ajustes/">Ajustes</a></li>
+         <li><a href="/admin/ajustes/">Audutorias</a></li>
+        <li><a href="/admin/logout.php">Salir</a></li>
+      </ul>
+    </aside>
 
   <main class="prod-main">
     <div class="inv-title">Reportes y estadísticas</div>

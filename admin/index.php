@@ -212,33 +212,20 @@ $alertas_tbl = q_all($conexion,"
       <ul class="prod-nav">
         <li><a class="active" href="/admin/index.php">inicio</a></li>
        
-        <?php if (can('productos.ver')): ?>
         <li><a href="/admin/productos/">Productos</a></li>
-        <?php endif; ?>
         <li><a href="/admin/categorias/">categorias</a></li>
-        <?php if (can('inventario.ver')): ?>
-           <li><a href="/admin/subcategorias/">subcategorias</a></li>
+       <li><a href="/admin/subcategorias/">subcategorias</a></li>
         <li><a href="/admin/inventario/">Inventario</a></li>
-        <?php endif; ?>
-        <?php if (can('pedidos.aprobar')): ?>
         <li><a href="/admin/pedidos/">Pedidos</a></li>
-        <?php endif; ?>
-        <?php if (can('alertas.ver')): ?>
+        <li><a href="/admin/proveedores/">Proveedores</a></li>
+          <li><a href="/admin/sucursales/">sucursales</a></li>
         <li><a href="/admin/alertas/">Alertas</a></li>
-        <?php endif; ?>
-        <?php if (can('reportes.detallados') || can('reportes.simple')): ?>
-        <li><a href="/admin/reportes/">Reportes</a></li>
-        <?php endif; ?>
-         <?php if (can('ventas.rapidas')): ?>
+        <li><a href="/admin/reportes/">Reportes y estadisticas</a></li>
         <li><a href="/admin/ventas/">Ventas</a></li>
-        <?php endif; ?>
-        <?php if (can('usuarios.gestionar') || can('usuarios.crear_empleado')): ?>
         <li><a href="/admin/usuarios/">Usuarios</a></li>
-        <?php endif; ?>
-        <?php if (can('usuarios.gestionar')): ?>
         <li><a href="/admin/roles/">Roles y permisos</a></li>
-        <?php endif; ?>
         <li><a href="/admin/ajustes/">Ajustes</a></li>
+         <li><a href="/admin/ajustes/">Audutorias</a></li>
         <li><a href="/admin/logout.php">Salir</a></li>
       </ul>
     </aside>
@@ -414,7 +401,7 @@ $alertas_tbl = q_all($conexion,"
             <div class="prod-head">
               <h5>Pedidos pendientes</h5>
               <?php if (can('pedidos.aprobar')): ?>
-              <div><a class="btn-sm" href="/pedidos/">Ir a pedidos</a></div>
+              <div><a class="btn-sm" href="/admin/pedidos/">Ir a pedidos</a></div>
               <?php endif; ?>
             </div>
             <div class="table-wrap">
@@ -493,10 +480,10 @@ $alertas_tbl = q_all($conexion,"
           <div class="four columns"><a class="btn" href="/admin/productos/crear.php">+ Nuevo producto</a></div>
           <?php endif; ?>
           <?php if (can('inventario.ingresar')): ?>
-          <div class="four columns"><a class="btn" href="/admin/inventario/ingresar.php">+ Ingreso de stock</a></div>
+          <div class="four columns"><a class="btn" href="/admin/inventario/ajustar.php">+ Ingreso de stock</a></div>
           <?php endif; ?>
           <?php if (can('ventas.rapidas')): ?>
-          <div class="four columns"><a class="btn" href="/admin/ventas/rapida.php"> Venta rápida</a></div>
+          <div class="four columns"><a class="btn" href="/admin/ventas/index.php"> Venta rápida</a></div>
           <?php endif; ?>
         </div>
       </div>
@@ -504,4 +491,5 @@ $alertas_tbl = q_all($conexion,"
     </main>
   </div>
 </body>
+
 </html>
